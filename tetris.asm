@@ -65,6 +65,16 @@
 
 
   ;; TODO Insert your code here
+
+; BEGIN:clear_leds
+clear_leds:
+	addi t0, zero, 0xFFFFFFFF
+	stw t0, LEDS(zero)
+	;stw zero, 4(LEDS)	
+	;stw zero, 8(LEDS)
+	ret
+; END:clear_leds
+
 font_data:
     .word 0xFC  ; 0
     .word 0x60  ; 1
