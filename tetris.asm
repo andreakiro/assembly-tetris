@@ -64,41 +64,86 @@
   .equ Y_LIMIT, 8
 
 
-  ;; TODO Insert your code here
+# CODE IS HERE
 
 ; BEGIN:clear_leds
 clear_leds:
 	addi t0, zero, 4
 	addi t1, zero, 8
-	stw zero, LEDS(zero)
-	stw zero, LEDS(t0)
-	stw zero, LEDS(t1)
+	stw zero, LEDS(zero) # store zero into first leds
+	stw zero, LEDS(t0)	 # store zero into second leds
+	stw zero, LEDS(t1)	 # store zero into thirds leds
 	ret
 ; END:clear_leds
 
 ; BEGIN:set_pixel
 set_pixel:
-	ldw t0, LEDS(a0)
-	addi t1, zero, 1
-	andi t2, a0, 3
-	slli t2, t2, 3
-	add t2, t2, a1
-	sll t1, t1, t2
-	or t1, t0, t1
-	stw t1, LEDS(a0)
+	ldw t0, LEDS(a0)	# load correct leds
+	addi t1, zero, 1	
+	andi t2, a0, 3		# isolate 2 lsb of x coordinate
+	slli t2, t2, 3		# move to correct column
+	add t2, t2, a1		# move to correct row
+	sll t1, t1, t2		# shift mask to correct position
+	or t1, t0, t1		
+	stw t1, LEDS(a0)	# store new value in leds
 	ret
 ; END:set_pixel
 
 ; BEGIN:wait
 wait:
-	addi t0, zero, 0
-	addi t1, zero, 1
-	slli t1, t1, 3
-	rec:
+	addi t0, zero, 0 # index to increment
+	addi t1, zero, 1 
+	slli t1, t1, 3	 # ceil value
+	loop_wait:
 		addi t0, t0, 1
-	bne t0, t1, rec
+	bne t0, t1, loop_wait
 	ret
 ; END:wait
+
+; BEGIN:in_gsa
+in_gsa:
+	cmpgei t0, a0, 12
+	cmplti t1, a0, 0
+	or t2, t0, t1	  # x is in gsa
+	cmpgei t0, a1, 8
+	cmplti t1, a1, 0
+	or t1, t0, t1 	  # y is in gsa
+	or v0, t1, t2     # both x, y are in gsa
+	ret
+; END:in_gsa
+
+; BEGIN:get_gsa
+get_gsa:
+	slli t0, a0, 3
+	add t0, t0, a1
+	slli t0, t0, 2	# gsa address
+	ldw v0, GSA(t0)	# load value of address
+	ret
+; END:get_gsa
+	
+; BEGIN:set_gsa
+set_gsa:
+	slli t0, a0, 3
+	add t0, t0, a1
+	slli t0, t0, 2	# gsa address 
+	stw a2, GSA(t0) # store p state in gsa
+	ret
+; END:set_gsa
+
+; BEGIN:draw_gsa
+draw_gsa:
+	ret
+; END:draw_gsa
+
+; BEGIN:draw_tetromino
+draw_tetromino:
+	ret
+; END:draw_tetromino
+
+; BEGIN:generate_tetromino
+generate_tetromino:
+	ret
+; END:generate_tetromino
 
 font_data:
     .word 0xFC  ; 0
