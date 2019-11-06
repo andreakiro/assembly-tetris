@@ -68,12 +68,37 @@
 
 ; BEGIN:clear_leds
 clear_leds:
-	addi t0, zero, 0xFFFFFFFF
-	stw t0, LEDS(zero)
-	;stw zero, 4(LEDS)	
-	;stw zero, 8(LEDS)
+	addi t0, zero, 4
+	addi t1, zero, 8
+	stw zero, LEDS(zero)
+	stw zero, LEDS(t0)
+	stw zero, LEDS(t1)
 	ret
 ; END:clear_leds
+
+; BEGIN:set_pixel
+set_pixel:
+	ldw t0, LEDS(a0)
+	addi t1, zero, 1
+	andi t2, a0, 3
+	slli t2, t2, 3
+	add t2, t2, a1
+	sll t1, t1, t2
+	or t1, t0, t1
+	stw t1, LEDS(a0)
+	ret
+; END:set_pixel
+
+; BEGIN:wait
+wait:
+	addi t0, zero, 0
+	addi t1, zero, 1
+	slli t1, t1, 3
+	rec:
+		addi t0, t0, 1
+	bne t0, t1, rec
+	ret
+; END:wait
 
 font_data:
     .word 0xFC  ; 0
