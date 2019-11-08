@@ -65,6 +65,19 @@
 
 
 # CODE IS HERE
+addi a0, zero, 5
+addi a1, zero, 5
+addi a2, zero, FALLING
+call set_gsa
+addi a0, zero, 6
+addi a1, zero, 2
+addi a2, zero, FALLING
+call set_gsa
+addi a0, zero, 2
+addi a1, zero, 2
+addi a2, zero, FALLING
+call set_gsa
+call draw_gsa
 
 ; BEGIN:clear_leds
 clear_leds:
@@ -93,7 +106,7 @@ set_pixel:
 wait:
 	addi t0, zero, 0 # index to increment
 	addi t1, zero, 1 
-	slli t1, t1, 3	 # ceil value
+	slli t1, t1, 20	 # ceil value
 	loop_wait:
 		addi t0, t0, 1
 	bne t0, t1, loop_wait
@@ -132,6 +145,35 @@ set_gsa:
 
 ; BEGIN:draw_gsa
 draw_gsa:
+	addi sp, sp, -4	 # increment stack pointer
+	stw ra, 2000(sp) 
+	call clear_leds
+	addi t3, zero, 1 # value when not in gsa
+	addi t4, zero, 0 # x coordinate value
+	addi t5, zero, 0 # y coordinate value
+	addi t6, zero, 7 # value when y coordinate reset
+	addi t7, zero, NOTHING # nothing p value
+	loop_draw_gsa:
+		add a0, zero, t4 # retrieve x coordinate
+		add a1, zero, t5 # retrieve y coordinate
+		call get_gsa
+		beq v0, t7, increment_coordinates # skip set pixel if nothing 
+		call set_pixel # leds coordinates are already in registers a0 (x) and a1 (y)
+		increment_coordinates:
+			bne t5, t6, increment_y_coord # if y != 7 branch increment_y_coord
+			increment_x_coord:
+				addi t4, t4, 1   # increment x
+				addi t5, zero, 0 # reset y to 0
+				br last_procedure 
+			increment_y_coord:
+				addi t5, t5, 1  # increment y
+			last_procedure:
+				add a0, zero, t4 # new value of x 
+				add a1, zero, t5 # new value of y
+				call in_gsa # check if new values (x,y) are in gsa
+	bne t3, v0, loop_draw_gsa # branch if new coordinates are in gsa
+	ldw ra, 2000(sp)
+	addi sp, sp, 4 # decrement stack pointer
 	ret
 ; END:draw_gsa
 
