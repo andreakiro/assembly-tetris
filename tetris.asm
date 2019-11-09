@@ -6,7 +6,6 @@
   .equ SCORE,  0x1010               ; score
   .equ GSA, 0x1014                  ; Game State Array starting address
   .equ SEVEN_SEGS, 0x1198           ; 7-segment display addresses
-  .equ STACK, 0x2000 				; start of stack memory
   .equ LEDS, 0x2000                 ; LED address
   .equ RANDOM_NUM, 0x2010           ; Random number generator address
   .equ BUTTONS, 0x2030              ; Buttons addresses
@@ -65,14 +64,9 @@
   .equ Y_LIMIT, 8
 
 # CODE IS HERE
-main_for_testing_code: 
-	addi t0, zero, 0
-	addi t1, zero, 0
-	bne t0, t1, start_drawing
-	call set_up_will_be_deleted
-	start_drawing:
-		call draw_gsa
-break
+
+main: 
+	break
 
 ; BEGIN:clear_leds
 clear_leds:
@@ -189,6 +183,8 @@ generate_tetromino:
 ; END:generate_tetromino
 
 ; BEGIN:helper
+  .equ STACK, 0x2000 	; start of stack memory
+
 push_stack:
 	addi sp, sp, -4
 	stw t0, STACK(sp)
@@ -226,77 +222,6 @@ pop_stack:
 	ldw t0, STACK(sp)
 	addi sp, sp, 4
 	ret
-
-set_up_will_be_deleted:
-		addi sp, sp, -4
-		stw ra, STACK(sp)	
-		addi a0, zero, 0xB
-		addi a1, zero, 0
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xB
-		addi a1, zero, 1
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xB
-		addi a1, zero, 2
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xB
-		addi a1, zero, 3
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xB
-		addi a1, zero, 4
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xB
-		addi a1, zero, 5
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xB
-		addi a1, zero, 6
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xB
-		addi a1, zero, 7
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 2
-		addi a1, zero, 0
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 2
-		addi a1, zero, 1
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 6
-		addi a1, zero, 2
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 1
-		addi a1, zero, 3
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 7
-		addi a1, zero, 4
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xA
-		addi a1, zero, 5
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 8
-		addi a1, zero, 6
-		addi a2, zero, FALLING
-		call set_gsa
-		addi a0, zero, 0xA
-		addi a1, zero, 7
-		addi a2, zero, FALLING
-		call set_gsa
-		ldw ra, STACK(sp)
-		addi sp, sp, 4
-		ret
 ; END:helper
 
 font_data:
