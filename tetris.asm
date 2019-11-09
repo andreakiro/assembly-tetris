@@ -64,7 +64,6 @@
   .equ X_LIMIT, 12
   .equ Y_LIMIT, 8
 
-
 # CODE IS HERE
 main_for_testing_code: 
 	addi t0, zero, 0
@@ -111,10 +110,10 @@ wait:
 
 ; BEGIN:in_gsa
 in_gsa:
-	cmpgei t0, a0, 12
+	cmpgei t0, a0, X_LIMIT
 	cmplti t1, a0, 0
 	or t2, t0, t1	  # x is in gsa
-	cmpgei t0, a1, 8
+	cmpgei t0, a1, Y_LIMIT
 	cmplti t1, a1, 0
 	or t1, t0, t1 	  # y is in gsa
 	or v0, t1, t2     # both x, y are in gsa
