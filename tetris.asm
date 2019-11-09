@@ -64,7 +64,6 @@
   .equ Y_LIMIT, 8
 
 # CODE IS HERE
-
 main: 
 	break
 
@@ -186,41 +185,27 @@ generate_tetromino:
   .equ STACK, 0x2000 	; start of stack memory
 
 push_stack:
-	addi sp, sp, -4
-	stw t0, STACK(sp)
-	addi sp, sp, -4
-	stw t1, STACK(sp)
-	addi sp, sp, -4
-	stw t2, STACK(sp)
-	addi sp, sp, -4
-	stw t3, STACK(sp)
-	addi sp, sp, -4
-	stw t4, STACK(sp)
-	addi sp, sp, -4
-	stw t5, STACK(sp)
-	addi sp, sp, -4
-	stw t6, STACK(sp)
-	addi sp, sp, -4
+	addi sp, sp, -32
+	stw t0, STACK+28(sp)
+	stw t1, STACK+24(sp)
+	stw t2, STACK+20(sp)
+	stw t3, STACK+16(sp)
+	stw t4, STACK+12(sp)
+	stw t5, STACK+8(sp)
+	stw t6, STACK+4(sp)
 	stw t7, STACK(sp)
 	ret
 
 pop_stack:
 	ldw t7, STACK(sp)
-	addi sp, sp, 4
-	ldw t6, STACK(sp)
-	addi sp, sp, 4
-	ldw t5, STACK(sp)
-	addi sp, sp, 4
-	ldw t4, STACK(sp)
-	addi sp, sp, 4
-	ldw t3, STACK(sp)
-	addi sp, sp, 4
-	ldw t2, STACK(sp)
-	addi sp, sp, 4
-	ldw t1, STACK(sp)
-	addi sp, sp, 4
-	ldw t0, STACK(sp)
-	addi sp, sp, 4
+	ldw t6, STACK+4(sp)
+	ldw t5, STACK+8(sp)
+	ldw t4, STACK+12(sp)
+	ldw t3, STACK+16(sp)
+	ldw t2, STACK+20(sp)
+	ldw t1, STACK+24(sp)
+	ldw t0, STACK+28(sp)
+	addi sp, sp, 32
 	ret
 ; END:helper
 
