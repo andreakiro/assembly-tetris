@@ -6,6 +6,7 @@
   .equ SCORE,  0x1010               ; score
   .equ GSA, 0x1014                  ; Game State Array starting address
   .equ SEVEN_SEGS, 0x1198           ; 7-segment display addresses
+  .equ STACK, 0x2000 				; start of stack memory
   .equ LEDS, 0x2000                 ; LED address
   .equ RANDOM_NUM, 0x2010           ; Random number generator address
   .equ BUTTONS, 0x2030              ; Buttons addresses
@@ -65,19 +66,14 @@
 
 
 # CODE IS HERE
-addi a0, zero, 5
-addi a1, zero, 5
-addi a2, zero, FALLING
-call set_gsa
-addi a0, zero, 6
-addi a1, zero, 2
-addi a2, zero, FALLING
-call set_gsa
-addi a0, zero, 2
-addi a1, zero, 2
-addi a2, zero, FALLING
-call set_gsa
-call draw_gsa
+main_for_testing_code: 
+	addi t0, zero, 0
+	addi t1, zero, 0
+	bne t0, t1, start_drawing
+	call set_up_will_be_deleted
+	start_drawing:
+		call draw_gsa
+break
 
 ; BEGIN:clear_leds
 clear_leds:
@@ -145,35 +141,41 @@ set_gsa:
 
 ; BEGIN:draw_gsa
 draw_gsa:
-	addi sp, sp, -4	 # increment stack pointer
-	stw ra, 2000(sp) 
+	addi sp, sp, -4	 # push stack pointer
+	stw ra, STACK(sp) # save ra to stack
 	call clear_leds
-	addi t3, zero, 1 # value when not in gsa
-	addi t4, zero, 0 # x coordinate value
-	addi t5, zero, 0 # y coordinate value
-	addi t6, zero, 7 # value when y coordinate reset
-	addi t7, zero, NOTHING # nothing p value
+	addi t0, zero, 0 # x coordinate value
+	addi t1, zero, 0 # y coordinate value
 	loop_draw_gsa:
-		add a0, zero, t4 # retrieve x coordinate
-		add a1, zero, t5 # retrieve y coordinate
+		add a0, zero, t0 # retrieve x coordinate
+		add a1, zero, t1 # retrieve y coordinate
+		call push_stack
 		call get_gsa
-		beq v0, t7, increment_coordinates # skip set pixel if nothing 
+		call pop_stack
+		addi t2, zero, NOTHING # nothing p value
+		beq v0, t2, increment_coordinates # skip set pixel if nothing 
+		call push_stack
 		call set_pixel # leds coordinates are already in registers a0 (x) and a1 (y)
+		call pop_stack
 		increment_coordinates:
-			bne t5, t6, increment_y_coord # if y != 7 branch increment_y_coord
+			addi t2, zero, 7  # value when y coordinate reset
+			bne t1, t2, increment_y_coord # if y != 7 branch increment_y_coord
 			increment_x_coord:
-				addi t4, t4, 1   # increment x
-				addi t5, zero, 0 # reset y to 0
+				addi t0, t0, 1   # increment x
+				addi t1, zero, 0 # reset y to 0
 				br last_procedure 
 			increment_y_coord:
-				addi t5, t5, 1  # increment y
+				addi t1, t1, 1  # increment y
 			last_procedure:
-				add a0, zero, t4 # new value of x 
-				add a1, zero, t5 # new value of y
+				add a0, zero, t0 # new value of x 
+				add a1, zero, t1 # new value of y
+				call push_stack
 				call in_gsa # check if new values (x,y) are in gsa
-	bne t3, v0, loop_draw_gsa # branch if new coordinates are in gsa
-	ldw ra, 2000(sp)
-	addi sp, sp, 4 # decrement stack pointer
+				call pop_stack
+	addi t2, zero, 1 # value when (x,y) are not in gsa
+	bne t2, v0, loop_draw_gsa # branch if new coordinates are in gsa
+	ldw ra, STACK(sp) # load ra from stack
+	addi sp, sp, 4	  # pop stack pointer
 	ret
 ; END:draw_gsa
 
@@ -186,6 +188,93 @@ draw_tetromino:
 generate_tetromino:
 	ret
 ; END:generate_tetromino
+
+; BEGIN:helper
+push_stack:		
+	addi sp, sp, -4
+	stw t0, STACK(sp)
+	addi sp, sp, -4
+	stw t1, STACK(sp)
+	ret
+
+pop_stack:
+	ldw t1, STACK(sp)
+	addi sp, sp, 4
+	ldw t0, STACK(sp)
+	addi sp, sp, 4
+	ret
+
+set_up_will_be_deleted:
+		addi sp, sp, -4
+		stw ra, STACK(sp)	
+		addi a0, zero, 0xB
+		addi a1, zero, 0
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xB
+		addi a1, zero, 1
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xB
+		addi a1, zero, 2
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xB
+		addi a1, zero, 3
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xB
+		addi a1, zero, 4
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xB
+		addi a1, zero, 5
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xB
+		addi a1, zero, 6
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xB
+		addi a1, zero, 7
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 2
+		addi a1, zero, 0
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 2
+		addi a1, zero, 1
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 6
+		addi a1, zero, 2
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 1
+		addi a1, zero, 3
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 7
+		addi a1, zero, 4
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xA
+		addi a1, zero, 5
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 8
+		addi a1, zero, 6
+		addi a2, zero, FALLING
+		call set_gsa
+		addi a0, zero, 0xA
+		addi a1, zero, 7
+		addi a2, zero, FALLING
+		call set_gsa
+		ldw ra, STACK(sp)
+		addi sp, sp, 4
+		ret
+; END:helper
 
 font_data:
     .word 0xFC  ; 0
