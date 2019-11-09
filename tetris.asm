@@ -150,7 +150,7 @@ draw_gsa:
 		call set_pixel # leds coordinates are already in registers a0 (x) and a1 (y)
 		call pop_stack
 		increment_coordinates:
-			addi t2, zero, 7  # value when y coordinate reset
+			addi t2, zero, Y_LIMIT-1  # y index just before being reset to 0
 			bne t1, t2, increment_y_coord # if y != 7 branch increment_y_coord
 			increment_x_coord:
 				addi t0, t0, 1   # increment x
