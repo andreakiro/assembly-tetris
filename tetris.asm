@@ -189,14 +189,38 @@ generate_tetromino:
 ; END:generate_tetromino
 
 ; BEGIN:helper
-push_stack:		
+push_stack:
 	addi sp, sp, -4
 	stw t0, STACK(sp)
 	addi sp, sp, -4
 	stw t1, STACK(sp)
+	addi sp, sp, -4
+	stw t2, STACK(sp)
+	addi sp, sp, -4
+	stw t3, STACK(sp)
+	addi sp, sp, -4
+	stw t4, STACK(sp)
+	addi sp, sp, -4
+	stw t5, STACK(sp)
+	addi sp, sp, -4
+	stw t6, STACK(sp)
+	addi sp, sp, -4
+	stw t7, STACK(sp)
 	ret
 
 pop_stack:
+	ldw t7, STACK(sp)
+	addi sp, sp, 4
+	ldw t6, STACK(sp)
+	addi sp, sp, 4
+	ldw t5, STACK(sp)
+	addi sp, sp, 4
+	ldw t4, STACK(sp)
+	addi sp, sp, 4
+	ldw t3, STACK(sp)
+	addi sp, sp, 4
+	ldw t2, STACK(sp)
+	addi sp, sp, 4
 	ldw t1, STACK(sp)
 	addi sp, sp, 4
 	ldw t0, STACK(sp)
