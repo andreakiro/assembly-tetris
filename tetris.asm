@@ -65,6 +65,23 @@
 
 # CODE IS HERE
 main: 
+	addi t0, zero, 4
+	stw t0, T_X(zero)
+
+	addi t0, zero, 5
+	stw t0, T_Y(zero)
+	
+	addi t0, zero, L
+	stw t0, T_type(zero)
+
+	addi t0, zero, E
+	stw t0, T_orientation(zero)
+
+	addi a0, zero, FALLING
+
+	call draw_tetromino
+	call draw_gsa
+	
 	break
 
 ; BEGIN:clear_leds
@@ -173,6 +190,40 @@ draw_gsa:
 
 ; BEGIN:draw_tetromino
 draw_tetromino:
+	addi sp, sp, -4
+	stw ra, STACK(sp)
+	add t0, a0, zero
+	ldw t1, T_X(zero)
+	ldw t2, T_Y(zero)
+	ldw t3, T_orientation(zero)
+	ldw t4, T_type(zero)
+	add a0, zero, t1 
+	add a1, zero, t2
+	add a2, zero, t0
+	call push_stack
+	call set_gsa 
+	call pop_stack
+	addi t7, zero, 0 # initialize counter
+	slli t5, t4, 2 # *4 to select appropriate location in DRAW_Ax
+	add t5, t5, t3 # incremented by orientation for the triplet
+	slli t5, t5, 2 # *4 again
+	draw_3_squares_loop:
+		ldw t6, DRAW_Ax(t5) # x offset
+		add t6, t6, t7
+		ldw t6, 0(t6)
+		add a0, t1, t6
+		ldw t6, DRAW_Ay(t5) # y offset
+		add t6, t6, t7
+		ldw t6, 0(t6)
+		add a1, t2, t6 # a2 has already been saved
+		call push_stack
+		call set_gsa 
+		call pop_stack
+		addi t7, t7, 4 # increment counter
+		addi t6, zero, 12
+		bne t6, t7, draw_3_squares_loop # exit condition if all 1+3 squares are set
+	ldw ra, STACK(sp)
+	addi sp, sp, 4
 	ret
 ; END:draw_tetromino
 
@@ -185,7 +236,11 @@ generate_tetromino:
   .equ STACK, 0x2000 	; start of stack memory
 
 push_stack:
-	addi sp, sp, -32
+	addi sp, sp, -48
+	stw a0, STACK+44(sp)
+	stw a1, STACK+40(sp)
+	stw a2, STACK+36(sp)
+	stw a3, STACK+32(sp)
 	stw t0, STACK+28(sp)
 	stw t1, STACK+24(sp)
 	stw t2, STACK+20(sp)
@@ -205,7 +260,11 @@ pop_stack:
 	ldw t2, STACK+20(sp)
 	ldw t1, STACK+24(sp)
 	ldw t0, STACK+28(sp)
-	addi sp, sp, 32
+	ldw a3, STACK+32(sp)
+	ldw a2, STACK+36(sp)
+	ldw a1, STACK+40(sp)
+	ldw a0, STACK+44(sp)
+	addi sp, sp, 48
 	ret
 ; END:helper
 
