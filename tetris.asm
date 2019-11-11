@@ -67,21 +67,15 @@
 main: 
 	addi t0, zero, 4
 	stw t0, T_X(zero)
-
 	addi t0, zero, 5
 	stw t0, T_Y(zero)
-	
 	addi t0, zero, L
 	stw t0, T_type(zero)
-
 	addi t0, zero, E
 	stw t0, T_orientation(zero)
-
-	addi a0, zero, FALLING
-
+	addi a0, zero, PLACED
 	call draw_tetromino
-	call draw_gsa
-	
+	call draw_gsa	
 	break
 
 ; BEGIN:clear_leds
@@ -191,31 +185,31 @@ draw_gsa:
 ; BEGIN:draw_tetromino
 draw_tetromino:
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, STACK(sp) # save return address in stack
 	add t0, a0, zero
 	ldw t1, T_X(zero)
 	ldw t2, T_Y(zero)
 	ldw t3, T_orientation(zero)
-	ldw t4, T_type(zero)
+	ldw t4, T_type(zero) # save in registers details about the falling tetromino
 	add a0, zero, t1 
 	add a1, zero, t2
-	add a2, zero, t0
+	add a2, zero, t0 # set arguments to set_gsa
 	call push_stack
-	call set_gsa 
+	call set_gsa # set the anchor of tetromino
 	call pop_stack
 	addi t7, zero, 0 # initialize counter
 	slli t5, t4, 2 # *4 to select appropriate location in DRAW_Ax
 	add t5, t5, t3 # incremented by orientation for the triplet
 	slli t5, t5, 2 # *4 again
-	draw_3_squares_loop:
+	draw_3_squares_loop: # set the 3 other points
 		ldw t6, DRAW_Ax(t5) # x offset
-		add t6, t6, t7
+		add t6, t6, t7 
 		ldw t6, 0(t6)
-		add a0, t1, t6
+		add a0, t1, t6 # new x coordinate
 		ldw t6, DRAW_Ay(t5) # y offset
 		add t6, t6, t7
 		ldw t6, 0(t6)
-		add a1, t2, t6 # a2 has already been saved
+		add a1, t2, t6 # new y coordinate (a2 has already been saved)
 		call push_stack
 		call set_gsa 
 		call pop_stack
