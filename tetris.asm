@@ -65,17 +65,30 @@
 
 # CODE IS HERE
 main: 
-	addi t0, zero, 4
+	addi t0, zero, 6
 	stw t0, T_X(zero)
-	addi t0, zero, 5
+	addi t0, zero, 7
 	stw t0, T_Y(zero)
-	addi t0, zero, L
+	addi t0, zero, B
 	stw t0, T_type(zero)
-	addi t0, zero, E
+	addi t0, zero, So
 	stw t0, T_orientation(zero)
 	addi a0, zero, PLACED
 	call draw_tetromino
-	call draw_gsa	
+	call draw_gsa
+
+	addi t0, zero, 5
+	stw t0, T_X(zero)
+	addi t0, zero, 6
+	stw t0, T_Y(zero)
+	addi t0, zero, T
+	stw t0, T_type(zero)
+	addi t0, zero, So
+	stw t0, T_orientation(zero)
+
+	addi a0, zero, OVERLAP
+	call detect_collision
+
 	break
 
 ; BEGIN:clear_leds
@@ -226,6 +239,78 @@ generate_tetromino:
 	ret
 ; END:generate_tetromino
 
+; BEGIN:detect_collision
+detect_collision:
+	addi sp, sp, -4
+	stw ra, STACK(sp)
+
+	add t0, a0, zero
+	ldw t1, T_X(zero)
+	ldw t2, T_Y(zero)
+	ldw t3, T_orientation(zero)
+	ldw t4, T_type(zero)
+
+	slli a0, t4, 2 # *4 to select appropriate location in DRAW_Ax
+	add a0, a0, t3 # incremented by orientation for the triplet
+	slli a0, a0, 2 # *4 again
+
+	addi t5, zero, E_COL
+	beq t0, t5, E_COL_check
+
+	addi t5, zero, W_COL
+	beq t0, t5, W_COL_check
+
+	addi t5, zero, So_COL
+	beq t0, t5, So_COL_check
+
+	OVERLAP_check:
+		add a1, t1, zero
+		add a2, t2, zero
+		call push_stack
+		call collision_at_position
+		call pop_stack
+		beq v0, zero, no_collision
+		br collision
+
+	E_COL_check:
+		addi a1, t1, 1
+		add a2, t2, zero
+		call push_stack
+		call collision_at_position
+		call pop_stack
+		beq v0, zero, no_collision
+		br collision
+
+	W_COL_check:
+		addi a1, t1, -1
+		add a2, t2, zero
+		call push_stack
+		call collision_at_position
+		call pop_stack
+		beq v0, zero, no_collision
+		br collision
+
+	So_COL_check:
+		add a1, t1, zero
+		addi a2, t2, 1
+		call push_stack
+		call collision_at_position
+		call pop_stack
+		beq v0, zero, no_collision
+		br collision
+	
+	collision:
+		add v0, t0, zero
+		br end
+	no_collision:
+		addi v0, zero, NONE
+		br end 
+	end:	
+		ldw ra, STACK(sp)
+		addi sp, sp, 4
+		ret
+; END:detect_collision
+
 ; BEGIN:helper
   .equ STACK, 0x2000 	; start of stack memory
 
@@ -260,6 +345,52 @@ pop_stack:
 	ldw a0, STACK+44(sp)
 	addi sp, sp, 48
 	ret
+
+collision_at_position:
+	addi sp, sp, -4 
+	stw ra, STACK(sp)
+	
+	add t5, a0, zero
+	add t1, a1, zero
+	add t2, a2, zero
+	addi t7, zero, 0 # initialize counter
+	collision_at_position_loop:
+		ldw t6, DRAW_Ax(t5) # x offset
+		add t6, t6, t7 
+		ldw t6, 0(t6)
+		add a0, t1, t6 # new x coordinate
+		ldw t6, DRAW_Ay(t5) # y offset
+		add t6, t6, t7
+		ldw t6, 0(t6)
+		add a1, t2, t6 # new y coordinate (a2 has already been saved)
+
+		call push_stack
+		call in_gsa
+		call pop_stack
+		addi t6, zero, 1
+		beq t6, v0, collision_at_position_detected
+
+		call push_stack
+		call get_gsa
+		call pop_stack
+		addi t6, zero, PLACED
+		beq v0, t6, collision_at_position_detected
+		
+		addi t7, t7, 4 # increment counter
+		addi t6, zero, 12
+		bne t6, t7, collision_at_position_loop # exit condition if all 1+3 squares are set
+
+	collision_at_position_not_detected:
+		addi v0, zero, 0
+		br collision_at_position_end
+	collision_at_position_detected:
+		addi v0, zero, 1
+		br collision_at_position_end
+	
+	collision_at_position_end:
+		ldw ra, STACK(sp)
+		addi sp, sp, 4
+		ret
 ; END:helper
 
 font_data:
