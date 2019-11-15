@@ -67,6 +67,21 @@
 main:
 	call generate_tetromino
 	call draw_gsa
+	addi a0, zero, rotL
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	addi a0, zero, moveR
+	call act
+	call act
+	addi a0, zero, moveL
+	call act
+	call act
+	break
+	call generate_tetromino
+	call draw_gsa
 	addi a0, zero, NOTHING 
 	call draw_tetromino
 	addi a0, zero, rotL
@@ -194,22 +209,24 @@ draw_gsa:
 ; BEGIN:draw_tetromino
 draw_tetromino:
 	addi sp, sp, -4
-	stw ra, STACK(sp) # save return address in stack
+	stw ra, STACK(sp)
+	# save in registers details about the falling tetromino
 	add t0, a0, zero
 	ldw t1, T_X(zero)
 	ldw t2, T_Y(zero)
 	ldw t3, T_orientation(zero)
-	ldw t4, T_type(zero) # save in registers details about the falling tetromino
+	ldw t4, T_type(zero)
+	# set arguments to set_gsa
 	add a0, zero, t1 
 	add a1, zero, t2
-	add a2, zero, t0 # set arguments to set_gsa
+	add a2, zero, t0 
 	call push_stack
 	call set_gsa # set the anchor of tetromino
 	call pop_stack
 	addi t7, zero, 0 # initialize counter
-	slli t5, t4, 2 # *4 to select appropriate location in DRAW_Ax
-	add t5, t5, t3 # incremented by orientation for the triplet
-	slli t5, t5, 2 # *4 again
+	slli t5, t4, 2   # *4 to select appropriate location in DRAW_Ax
+	add t5, t5, t3   # incremented by orientation for the triplet
+	slli t5, t5, 2   # *4 again
 	draw_3_squares_loop: # set the 3 other points
 		ldw t6, DRAW_Ax(t5) # x offset
 		add t6, t6, t7 
@@ -265,7 +282,6 @@ detect_collision:
 ; BEGIN:rotate_tetromino
 rotate_tetromino:
 	ldw t0, T_orientation(zero)
-	
 	addi t1, zero, rotR
 	beq t1, a0, rot_clockwise
 	rot_counterclockwise:
@@ -286,6 +302,58 @@ rotate_tetromino:
 
 ; BEGIN:act
 act:
+	addi sp, sp, -4
+	stw ra, STACK(sp)
+	call push_stack
+	addi a0, zero, NOTHING
+	call draw_tetromino
+	call pop_stack
+	add t0, zero, a0
+	addi t1, zero, moveL
+	beq t0, t1, move_left
+	addi t1, zero, rotL
+	beq t0, t1, rotate
+	addi t1, zero, reset
+	beq t0, t1, act_reset
+	addi t1, zero, rotR
+	beq t0, t1, rotate
+	addi t1, zero, moveR
+	beq t0, t1, move_right
+	addi t1, zero, moveD
+	beq t0, t1, move_down
+	move_down:
+		# doesnt check if there is no collision
+		ldw t0, T_Y(zero)
+		addi t0, t0, 1
+		stw t0, T_Y(zero)
+		br update_pos
+	move_right:
+		# doesnt check if there is no collision
+		ldw t0, T_X(zero)
+		addi t0, t0, 1
+		stw t0, T_X(zero)
+		br update_pos
+	move_left:
+		# doesnt check if there is no collision
+		ldw t0, T_X(zero)
+		addi t0, t0, -1
+		stw t0, T_X(zero)
+		br update_pos
+	rotate:
+		# doesnt check overlapping cases
+		call push_stack
+		call rotate_tetromino
+		call pop_stack
+		br update_pos
+	act_reset:
+		# not done yet
+	update_pos: 
+		call push_stack
+		call draw_tetromino # pour moi il ya un pb, le a0 est mal set, draw tetromino fonctionne avec nimporte quelle valeur ?!?!
+		call draw_gsa # a faire ici ??
+		call pop_stack
+	ldw ra, STACK(sp)
+	addi sp, sp, 4
 	ret
 ; END:act
 
