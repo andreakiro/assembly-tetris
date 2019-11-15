@@ -64,18 +64,27 @@
   .equ Y_LIMIT, 8
 
 # CODE IS HERE
-main: 
-	addi t0, zero, 4
-	stw t0, T_X(zero)
-	addi t0, zero, 5
-	stw t0, T_Y(zero)
-	addi t0, zero, L
-	stw t0, T_type(zero)
-	addi t0, zero, E
-	stw t0, T_orientation(zero)
-	addi a0, zero, PLACED
+main:
+	call generate_tetromino
+	call draw_gsa
+	addi a0, zero, NOTHING 
 	call draw_tetromino
-	call draw_gsa	
+	addi a0, zero, rotL
+	call rotate_tetromino
+	call draw_tetromino
+	call draw_gsa
+	addi a0, zero, NOTHING 
+	call draw_tetromino
+	addi a0, zero, rotL
+	call rotate_tetromino
+	call draw_tetromino
+	call draw_gsa
+	addi a0, zero, NOTHING 
+	call draw_tetromino
+	addi a0, zero, rotL
+	call rotate_tetromino
+	call draw_tetromino
+	call draw_gsa
 	break
 
 ; BEGIN:clear_leds
@@ -223,8 +232,62 @@ draw_tetromino:
 
 ; BEGIN:generate_tetromino
 generate_tetromino:
+	addi sp, sp, -4
+	stw ra, STACK(sp)
+	get_random: 
+		#ldw t0, RANDOM_NUM(zero) problem to regulate
+		addi t0, zero, 0x3
+		andi t0, t0, 0x7 # get last 3 bits with a mask 
+		cmpge t1, t0, zero # x >= 0
+		cmplti t2, t0, 0x5 # x <= 4
+		and t1, t1, t2 # check both cond
+		beq t1, zero, get_random
+	# store correct tetromino informations in memory
+	stw t0, T_type(zero)
+	addi t0, zero, START_X
+	stw t0, T_X(zero)
+	addi t0, zero, START_Y
+	stw t0, T_Y(zero)
+	addi t0, zero, N
+	stw t0, T_orientation(zero)
+	addi a0, zero, FALLING
+	call draw_tetromino # draw given tetromino
+	ldw ra, STACK(sp)
+	addi sp, sp, 4
 	ret
 ; END:generate_tetromino
+
+; BEGIN:detect_collision
+detect_collision:
+	ret
+; END:detect_collision
+
+; BEGIN:rotate_tetromino
+rotate_tetromino:
+	ldw t0, T_orientation(zero)
+	
+	addi t1, zero, rotR
+	beq t1, a0, rot_clockwise
+	rot_counterclockwise:
+		addi t0, t0, -1
+		cmplti t1, t0, N
+		beq zero, t1, update_orientation
+		addi t0, zero, 0x3
+		br update_orientation
+	rot_clockwise:
+		addi t0, t0, 1
+		addi t1, zero, ORIENTATION_END
+		bne t0, t1, update_orientation
+		add t0, zero, zero
+	update_orientation:
+		stw t0, T_orientation(zero)
+	ret
+; END:rotate_tetromino
+
+; BEGIN:act
+act:
+	ret
+; END:act
 
 ; BEGIN:helper
   .equ STACK, 0x2000 	; start of stack memory
