@@ -522,10 +522,37 @@ remove_full_line:
 
 ; BEGIN:increment_score
 increment_score:
+	ldw t0, SCORE(zero)
+	cmplti t1, t0, 0x3E8 # t1 = score < 1000
+	beq t1, zero, end_increment_score
+	addi t0, t0, 1
+	stw t0, SCORE (zero)
+	end_increment_score:
 	ret
 ; END:increment_score
 
-; BEGIN:
+; BEGIN:display_score
+display_score:
+	ldw t0, SCORE(zero)
+	# mod 1
+	# mod 10
+	# mod 100
+	# update RAM
+	ret
+; END:display_score
+
+; BEGIN:reset_game
+reset_game:
+	addi sp, sp, -4
+	stw ra, STACK(sp)
+	# put score to 0
+	# generate tetromino
+	# all others gsa locations are 0
+	# the leds are lit according to the gsa
+	ldw ra, STACK(sp)
+	addi sp, sp, 4
+	ret
+; END:reset_game
 
 ; BEGIN:helper
   .equ STACK, 0x2000 	; start of stack memory
