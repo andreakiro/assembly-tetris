@@ -63,30 +63,8 @@
   .equ X_LIMIT, 12
   .equ Y_LIMIT, 8
 
-test_for_collision: 
-	addi t0, zero, 6
-	stw t0, T_X(zero)
-	addi t0, zero, 7
-	stw t0, T_Y(zero)
-	addi t0, zero, B
-	stw t0, T_type(zero)
-	addi t0, zero, So
-	stw t0, T_orientation(zero)
-	addi a0, zero, PLACED
-	call draw_tetromino
-	call draw_gsa
 
-	addi t0, zero, 5
-	stw t0, T_X(zero)
-	addi t0, zero, 6
-	stw t0, T_Y(zero)
-	addi t0, zero, T
-	stw t0, T_type(zero)
-	addi t0, zero, So
-	stw t0, T_orientation(zero)
-
-	addi a0, zero, OVERLAP
-	call detect_collision
+# CODE IS HERE 
 
 test_for_rotation:
 	call generate_tetromino
@@ -100,30 +78,20 @@ test_for_rotation:
 	addi a0, zero, moveR
 	call act
 	call act
+	call act
+	call act
+	call act
+	addi a0, zero, rotL
+	call act
 	addi a0, zero, moveL
 	call act
 	call act
-	break
-	call generate_tetromino
-	call draw_gsa
-	addi a0, zero, NOTHING 
-	call draw_tetromino
-	addi a0, zero, rotL
-	call rotate_tetromino
-	call draw_tetromino
-	call draw_gsa
-	addi a0, zero, NOTHING 
-	call draw_tetromino
-	addi a0, zero, rotL
-	call rotate_tetromino
-	call draw_tetromino
-	call draw_gsa
-	addi a0, zero, NOTHING 
-	call draw_tetromino
-	addi a0, zero, rotL
-	call rotate_tetromino
-	call draw_tetromino
-	call draw_gsa
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act
 	break
 
 ; BEGIN:clear_leds
@@ -276,8 +244,8 @@ generate_tetromino:
 	addi sp, sp, -4
 	stw ra, STACK(sp)
 	get_random: 
-		#ldw t0, RANDOM_NUM(zero) problem to regulate
-		addi t0, zero, 0x3
+		#ldw t0, RANDOM_NUM(zero)
+		addi t0, zero, 0x3 # CHEAT THE TETROMINO
 		andi t0, t0, 0x7 # get last 3 bits with a mask 
 		cmpge t1, t0, zero # x >= 0
 		cmplti t2, t0, 0x5 # x <= 4
@@ -413,40 +381,151 @@ act:
 	addi t1, zero, moveD
 	beq t0, t1, move_down
 	move_down:
-		# doesnt check if there is no collision
+		call push_stack
+		addi a0, zero, So_COL
+		call detect_collision
+		call pop_stack
+		addi t0, zero, So_COL
+		beq v0, t0, update_pos
 		ldw t0, T_Y(zero)
 		addi t0, t0, 1
 		stw t0, T_Y(zero)
 		br update_pos
 	move_right:
-		# doesnt check if there is no collision
+		call push_stack
+		addi a0, zero, E_COL
+		call detect_collision
+		call pop_stack
+		addi t0, zero, E_COL
+		beq v0, t0, update_pos
 		ldw t0, T_X(zero)
 		addi t0, t0, 1
 		stw t0, T_X(zero)
 		br update_pos
 	move_left:
-		# doesnt check if there is no collision
+		call push_stack
+		addi a0, zero, W_COL
+		call detect_collision
+		call pop_stack
+		addi t0, zero, W_COL
+		beq v0, t0, update_pos
 		ldw t0, T_X(zero)
 		addi t0, t0, -1
 		stw t0, T_X(zero)
 		br update_pos
 	rotate:
-		# doesnt check overlapping cases
+		# save initial position
+		ldw t0, T_X(zero)
+		ldw t1, T_Y(zero)
+		ldw t2, T_orientation(zero)
+		# rotate tetromino (change his orientation)
 		call push_stack
 		call rotate_tetromino
 		call pop_stack
+		# check if there is any overlap
+		call push_stack
+		addi a0, zero, OVERLAP		
+		call detect_collision
+		call pop_stack
+		addi t3, zero, OVERLAP 
+		bne v0, t3, update_pos
+		# there is an overlap, move towards center [TODO: move correct direction in extreme cases]
+		first_shift:
+			cmpgei t3, t0, 6
+			beq t3, zero, toward_center_right1
+			toward_center_left1:
+				addi t3, t0, -1
+				stw t3, T_X(zero)
+				br second_part
+			toward_center_right1:
+				addi t3, t0, 1
+				stw t3, T_X(zero) 
+		second_part:
+		# check if there is any overlap
+		call push_stack
+		addi a0, zero, OVERLAP		
+		call detect_collision
+		call pop_stack
+		addi t3, zero, OVERLAP 
+		bne v0, t3, update_pos
+		# there is an overlap, move towards center [TODO: move correct direction in extreme cases]
+		second_shift:
+			cmpgei t3, t0, 6
+			beq t3, zero, toward_center_right2
+			toward_center_left2:
+				addi t3, t0, -1
+				stw t3, T_X(zero)
+				br last_part
+			toward_center_right2:
+				addi t3, t0, 1
+				stw t3, T_X(zero) 
+		last_part:
+		# check if there is any overlap
+		call push_stack
+		addi a0, zero, OVERLAP		
+		call detect_collision
+		call pop_stack
+		addi t3, zero, OVERLAP 
+		bne v0, t3, update_pos
+		stw t0, T_X(zero)
+		stw t1, T_Y(zero)
+		stw t2, T_orientation(zero)
 		br update_pos
 	act_reset:
-		# not done yet
+		call push_stack
+		#call reset_game
+		call pop_stack 
 	update_pos: 
 		call push_stack
-		call draw_tetromino # pour moi il ya un pb, le a0 est mal set, draw tetromino fonctionne avec nimporte quelle valeur ?!?!
+		call draw_tetromino
 		call draw_gsa # a faire ici ??
 		call pop_stack
 	ldw ra, STACK(sp)
 	addi sp, sp, 4
 	ret
 ; END:act
+
+; BEGIN:get_input
+get_input:
+	ldw t0, BUTTONS+4(zero)
+	andi t1, t0, 1
+	addi v0, zero, moveL
+	bne t1, zero, end_get_input
+	srli t0, t0, 1
+	andi t1, t0, 1
+	addi v0, zero, rotL
+	bne t1, zero, end_get_input
+	srli t0, t0, 1
+	andi t1, t0, 1
+	addi v0, zero, reset
+	bne t1, zero, end_get_input
+	srli t0, t0, 1
+	andi t1, t0, 1
+	addi v0, zero, rotR
+	bne t1, zero, end_get_input
+	srli t0, t0, 1
+	andi t1, t0, 1
+	addi v0, zero, moveR
+	end_get_input:
+	ret 
+; END:get_input
+
+; BEGIN:detect_full_line
+detect_full_line:
+	ret
+; END:detect_full_line
+
+; BEGIN:remove_full_line
+remove_full_line:
+	ret
+; END:remove_full_line
+
+; BEGIN:increment_score
+increment_score:
+	ret
+; END:increment_score
+
+; BEGIN:
 
 ; BEGIN:helper
   .equ STACK, 0x2000 	; start of stack memory
