@@ -68,36 +68,9 @@
 
 ; BEGIN:main
 main:
+	
 	ret
 ; END:main
-
-test_for_rotation:
-	call generate_tetromino
-	call draw_gsa
-	addi a0, zero, rotL
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	addi a0, zero, moveR
-	call act
-	call act
-	call act
-	call act
-	call act
-	addi a0, zero, rotL
-	call act
-	addi a0, zero, moveL
-	call act
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act
-	break
 
 ; BEGIN:clear_leds
 clear_leds:
@@ -663,10 +636,58 @@ increment_score:
 ; BEGIN:display_score
 display_score:
 	ldw t0, SCORE(zero)
-	# mod 1
-	# mod 10
-	# mod 100
-	# update RAM
+	add t1, zero, t0 # unit
+	add t2, zero, t0 # decimal
+	add t3, zero, t0 # decimal squared
+	
+	loop_to_get_unit:
+	cmplti t4, t1, 10
+	bne t4, zero, get_decimal
+	addi t1, t1, -10
+	br loop_to_get_unit
+	
+	get_decimal:
+	sub t2, t2, t1
+	add t5, zero, zero
+	loop_to_get_decimal:
+	cmplti t4, t2, 100
+	bne t4, zero, get_unit_decimal
+	addi t2, t2, -100
+	br loop_to_get_decimal
+	get_unit_decimal:
+	beq t2, zero, end_decimal
+	addi t2, t2, -10
+	addi t5, t5, 1
+	br get_unit_decimal
+	end_decimal:
+	add t2, zero, t5
+	
+	get_decimal_squared:
+	slli t4, t2, 3
+	add t4, t4, t2
+	add t4, t4, t2
+	sub t3, t3, t4
+	sub t3, t3, t1
+	add t4, zero, zero
+	get_unit_decimal_squared:
+	beq t3, zero, end_decimal_squared
+	addi t3, t3, -100
+	addi t4, t4, 1
+	br get_unit_decimal_squared
+	end_decimal_squared:
+	add t3, zero, t4
+	
+	slli t1, t1, 2
+	slli t2, t2, 2
+	slli t3, t3, 2
+	
+	ldw t1, font_data(t1)
+	ldw t2, font_data(t2)
+	ldw t3, font_data(t3)
+	
+	stw t1, SEVEN_SEGS+12(zero)
+	stw t2, SEVEN_SEGS+8(zero)
+	stw t3, SEVEN_SEGS+4(zero)
 	ret
 ; END:display_score
 
@@ -674,28 +695,9 @@ display_score:
 reset_game:
 	addi sp, sp, -4
 	stw ra, STACK(sp)
-	# score to zero
-	ldw zero, SCORE(zero) 
-	addi t0, zero, Y_LIMIT # t0 = y starting from 8 to 0
-	loop_reset:
-		addi t0, t0, -1 
-		addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
-		addi t2, zero, 1 # t2 = all x from line y are 1
-		loop_detect_full_line_x:
-			addi t1, t1, -1
-			call push_stack
-			add a0, zero, t1 # a0 = x
-			add a1, zero, t0 # a1 = y
-			call get_gsa
-			call pop_stack
-			and t2, t2, v0 # A VERIFIER, FONCTINNE AUSSI AVEC P = FALLING (0X02) ? 
-			beq t2, zero, loop_detect_full_line_y
-			bne t1, zero, loop_detect_full_line_x
-		addi t3, zero, 1
-		beq t2, t3, skip_detect_full_line
-		bne t0, zero, loop_detect_full_line_y
+	stw zero, SCORE(zero) 
+	call clear_leds
 	call generate_tetromino
-	call draw_gsa # A FAIRE ICI ? 
 	ldw ra, STACK(sp)
 	addi sp, sp, 4
 	ret
@@ -781,6 +783,34 @@ collision_at_position:
 		ldw ra, STACK(sp)
 		addi sp, sp, 4
 		ret
+
+test_for_rotation_to_be_deleted:
+	call generate_tetromino
+	call draw_gsa
+	addi a0, zero, rotL
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	addi a0, zero, moveR
+	call act
+	call act
+	call act
+	call act
+	call act
+	addi a0, zero, rotL
+	call act
+	addi a0, zero, moveL
+	call act
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act
+	break
 ; END:helper
 
 font_data:
