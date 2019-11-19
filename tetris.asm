@@ -66,6 +66,87 @@
 
 # CODE IS HERE 
 
+test2:
+	add v0, zero, zero
+	add a0, zero, zero
+	addi a1, zero, 5
+	addi a2, zero, PLACED
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	call draw_gsa
+	call detect_full_line
+	add a0, zero, v0
+	call remove_full_line
+	call draw_gsa
+	break 
+
+test:
+	call generate_tetromino
+	call draw_gsa
+	addi a0, zero, moveR
+	call act
+	call act
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act	
+	call act
+	call act
+	call generate_tetromino
+	addi a0, zero, moveL
+	call act
+	call act
+	call act
+	call act
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call generate_tetromino
+	addi a0, zero, moveL
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call detect_full_line
+	add a0, zero, v0
+	call remove_full_line
+	break
+
 ; BEGIN:main
 main:
 	
@@ -99,7 +180,7 @@ set_pixel:
 wait:
 	addi t0, zero, 0 # index to increment
 	addi t1, zero, 1 
-	slli t1, t1, 20	 # ceil value
+	slli t1, t1, 1	 # ceil value (20)
 	loop_wait:
 		addi t0, t0, 1
 	bne t0, t1, loop_wait
@@ -223,7 +304,7 @@ generate_tetromino:
 	stw ra, STACK(sp)
 	get_random: 
 		#ldw t0, RANDOM_NUM(zero)
-		addi t0, zero, 0x3 # CHEAT THE TETROMINO
+		addi t0, zero, B # CHEAT THE TETROMINO
 		andi t0, t0, 0x7 # get last 3 bits with a mask 
 		cmpge t1, t0, zero # x >= 0
 		cmplti t2, t0, 0x5 # x <= 4
@@ -595,6 +676,7 @@ remove_full_line: # A MODULARISER !! A TESTER !!
 		addi t1, t0, -1 # t1 = line above full line (y-1)
 		addi t2, zero, X_LIMIT # # t2 = x starting from 12 to 0
 		loop_remove_full_line_x:
+			addi t2, t2, -1
 			call push_stack
 			add a0, zero, t2 # a0 = x
 			add a1, zero, t1 # a1 = y - 1
@@ -610,6 +692,7 @@ remove_full_line: # A MODULARISER !! A TESTER !!
 	last_step_remove_full_line: 
 		addi t2, zero, X_LIMIT # # t2 = x starting from 12 to 0
 		loop_remove_full_line_x_ls:
+			addi t2, t2, -1
 			call push_stack
 			add a0, zero, t2 # a0 = x
 			add a1, zero, t0 # a1 = y 
