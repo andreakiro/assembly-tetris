@@ -66,6 +66,11 @@
 
 # CODE IS HERE 
 
+; BEGIN:main
+main:
+	ret
+; END:main
+
 test_for_rotation:
 	call generate_tetromino
 	call draw_gsa
@@ -511,12 +516,136 @@ get_input:
 ; END:get_input
 
 ; BEGIN:detect_full_line
-detect_full_line:
+detect_full_line: # TO BE TESTED 
+	addi sp, sp, -4
+	stw ra, STACK(sp)
+	addi t0, zero, Y_LIMIT # t0 = y starting from 8 to 0
+	loop_detect_full_line_y:
+		addi t0, t0, -1 
+		addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
+		addi t2, zero, 1 # t2 = all x from line y are 1
+		loop_detect_full_line_x:
+			addi t1, t1, -1
+			call push_stack
+			add a0, zero, t1 # a0 = x
+			add a1, zero, t0 # a1 = y
+			call get_gsa
+			call pop_stack
+			and t2, t2, v0 # A VERIFIER, FONCTINNE AUSSI AVEC P = FALLING (0X02) ? 
+			beq t2, zero, loop_detect_full_line_y
+			bne t1, zero, loop_detect_full_line_x
+		addi t3, zero, 1
+		beq t2, t3, skip_detect_full_line
+		bne t0, zero, loop_detect_full_line_y
+	addi v0, zero, Y_LIMIT
+	skip_detect_full_line:
+	add v0, zero, t0 # v0 = smallest y st for all x : gsa(x,y) = 1
+	ldw ra, STACK(sp)
+	addi sp, sp, 4
 	ret
 ; END:detect_full_line
 
 ; BEGIN:remove_full_line
-remove_full_line:
+remove_full_line: # A MODULARISER !! A TESTER !!
+	addi sp, sp, -4
+	stw ra, STACK(sp)
+	add t0, zero, a0 # t0 = y (full line)
+	
+	addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
+	loop_remove_full_line_x1:
+		addi t1, t1, -1
+		call push_stack
+		add a0, zero, t1 # a0 = x
+		add a1, zero, t0 # a1 = y
+		addi a2, zero, NOTHING # a2 = p = nothing
+		call set_gsa
+		call pop_stack
+		bne t1, zero, loop_remove_full_line_x1
+	
+	call push_stack
+	call draw_gsa
+	call wait
+	call pop_stack
+
+	addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
+	loop_remove_full_line_x2:
+		addi t1, t1, -1
+		call push_stack
+		add a0, zero, t1 # a0 = x
+		add a1, zero, t0 # a1 = y
+		addi a2, zero, PLACED # a2 = p = placed
+		call set_gsa
+		call pop_stack
+		bne t1, zero, loop_remove_full_line_x2
+
+	call push_stack
+	call draw_gsa
+	call wait
+	call pop_stack
+
+	addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
+	loop_remove_full_line_x3:
+		addi t1, t1, -1
+		call push_stack
+		add a0, zero, t1 # a0 = x
+		add a1, zero, t0 # a1 = y
+		addi a2, zero, NOTHING # a2 = p = nothing
+		call set_gsa
+		call pop_stack
+		bne t1, zero, loop_remove_full_line_x3
+
+	call push_stack
+	call draw_gsa
+	call wait
+	call pop_stack
+
+	addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
+	loop_remove_full_line_x4:
+		addi t1, t1, -1
+		call push_stack
+		add a0, zero, t1 # a0 = x
+		add a1, zero, t0 # a1 = y
+		addi a2, zero, PLACED # a2 = p = placed
+		call set_gsa
+		call pop_stack
+		bne t1, zero, loop_remove_full_line_x4
+
+	call push_stack
+	call draw_gsa
+	call wait
+	call pop_stack
+
+	# REMOVE DEFINITELY THE LINE, MOVE ALL UPPER PIXELS ONE LINE DOWN
+
+	loop_remove_full_line_y:
+		beq t0, zero, last_step_remove_full_line
+		addi t1, t0, -1 # t1 = line above full line (y-1)
+		addi t2, zero, X_LIMIT # # t2 = x starting from 12 to 0
+		loop_remove_full_line_x:
+			call push_stack
+			add a0, zero, t2 # a0 = x
+			add a1, zero, t1 # a1 = y - 1
+			call get_gsa
+			add a1, zero, t0 # a1 = y 
+			add a2, zero, v0 # a2 = p of y - 1
+			call set_gsa
+			call pop_stack
+			bne t2, zero, loop_remove_full_line_x
+		addi t0, t0, -1
+		br loop_remove_full_line_y
+
+	last_step_remove_full_line: 
+		addi t2, zero, X_LIMIT # # t2 = x starting from 12 to 0
+		loop_remove_full_line_x_ls:
+			call push_stack
+			add a0, zero, t2 # a0 = x
+			add a1, zero, t0 # a1 = y 
+			addi a2, zero, NOTHING # a2 = p = nothing
+			call set_gsa
+			call pop_stack
+			bne t2, zero, loop_remove_full_line_x_ls
+	ldw ra, STACK(sp)
+	addi sp, sp, 4
 	ret
 ; END:remove_full_line
 
@@ -545,10 +674,28 @@ display_score:
 reset_game:
 	addi sp, sp, -4
 	stw ra, STACK(sp)
-	# put score to 0
-	# generate tetromino
-	# all others gsa locations are 0
-	# the leds are lit according to the gsa
+	# score to zero
+	ldw zero, SCORE(zero) 
+	addi t0, zero, Y_LIMIT # t0 = y starting from 8 to 0
+	loop_reset:
+		addi t0, t0, -1 
+		addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
+		addi t2, zero, 1 # t2 = all x from line y are 1
+		loop_detect_full_line_x:
+			addi t1, t1, -1
+			call push_stack
+			add a0, zero, t1 # a0 = x
+			add a1, zero, t0 # a1 = y
+			call get_gsa
+			call pop_stack
+			and t2, t2, v0 # A VERIFIER, FONCTINNE AUSSI AVEC P = FALLING (0X02) ? 
+			beq t2, zero, loop_detect_full_line_y
+			bne t1, zero, loop_detect_full_line_x
+		addi t3, zero, 1
+		beq t2, t3, skip_detect_full_line
+		bne t0, zero, loop_detect_full_line_y
+	call generate_tetromino
+	call draw_gsa # A FAIRE ICI ? 
 	ldw ra, STACK(sp)
 	addi sp, sp, 4
 	ret
