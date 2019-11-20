@@ -535,6 +535,8 @@ get_input:
 	srli t0, t0, 1
 	andi t1, t0, 1
 	addi v0, zero, moveR
+	bne t1, zero, end_get_input
+	add v0, zero, zero
 	end_get_input:
 	stw zero, BUTTONS+4(zero)
 	ret 
@@ -544,11 +546,14 @@ get_input:
 detect_full_line:
 	addi sp, sp, -4
 	stw ra, 0(sp)
+
 	addi t0, zero, Y_LIMIT # t0 = y starting from 8 to 0
 	loop_detect_full_line_y:
-		addi t0, t0, -1 
+		addi t0, t0, -1
+		addi t3, zero, -1
+		beq t0, t3, no_full_lines
 		addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
-		addi t2, zero, 1 # t2 = all x from line y are 1
+		addi t2, zero, 1 # t2 = all x from line y are 1 (marker)
 		loop_detect_full_line_x:
 			addi t1, t1, -1
 			call push_stack
@@ -556,15 +561,15 @@ detect_full_line:
 			add a1, zero, t0 # a1 = y
 			call get_gsa
 			call pop_stack
-			and t2, t2, v0 # A VERIFIER, FONCTINNE AUSSI AVEC P = FALLING (0X02) ? 
+			and t2, t2, v0
 			beq t2, zero, loop_detect_full_line_y
 			bne t1, zero, loop_detect_full_line_x
-		addi t3, zero, 1
-		beq t2, t3, skip_detect_full_line
-		bne t0, zero, loop_detect_full_line_y
-	addi v0, zero, Y_LIMIT
-	skip_detect_full_line:
-	add v0, zero, t0 # v0 = smallest y st for all x : gsa(x,y) = 1
+
+	add v0, zero, t0 # v0 = smallest y st for all x : gsa(x,y) = 1/2
+	br end_detect_full_line
+	no_full_lines: 
+	addi v0, zero, Y_LIMIT 
+	end_detect_full_line:
 	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
