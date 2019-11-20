@@ -57,7 +57,7 @@
   .equ START_Y, 1
 
   ;; game rate of tetrominoe falling down (in terms of game loop iteration)
-  .equ RATE, 5
+  .equ RATE, 1
 
   ;; standard limits
   .equ X_LIMIT, 12
@@ -69,6 +69,60 @@
 init_stack_pointer:
 	addi sp, zero, 0x2000
 
+main2:
+	call reset_game
+m_generate_tetromino_loop:
+m_falling_loop:
+	addi s0, zero, RATE
+m_input_loop:
+	beq s0, zero, m_input_loop_end
+	call draw_gsa
+	call display_score
+	addi a0, zero, NOTHING
+	call draw_tetromino
+	call wait
+	call get_input
+	addi a0, v0, 0
+	beq a0, zero, skip_no_input
+	call act
+skip_no_input:
+	addi a0, zero, FALLING
+	call draw_tetromino
+	addi s0, s0, -1
+	jmpi m_input_loop
+m_input_loop_end:
+	addi a0, zero, NOTHING
+	call draw_tetromino
+	addi a0, zero, moveD
+	call act
+	bne v0, zero, m_falling_loop_end
+	addi a0, zero, FALLING
+	call draw_tetromino
+	jmpi m_falling_loop
+m_falling_loop_end:
+	addi a0, zero, PLACED
+	call draw_tetromino
+m_remove_full_lines_loop:
+	call detect_full_line
+	addi t0, zero, 8
+	beq v0, t0, m_remove_full_lines_loop
+	addi a0, v0, 0
+	call remove_full_line
+	call increment_score
+	jmpi m_remove_full_lines_loop
+m_remove_full_lines_end:
+	call generate_tetromino
+	addi a0, zero, OVERLAP
+	add s1, zero, a0
+	call detect_collision
+	beq s1, v0, m_generate_tetromino_loop_end
+	addi a0, zero, FALLING
+	call draw_tetromino
+	jmpi m_generate_tetromino_loop
+m_generate_tetromino_loop_end:
+	jmpi main
+
+break
 ; BEGIN:main
 main:
 	addi s0, zero, RATE
@@ -505,9 +559,10 @@ act:
 		call pop_stack
 		br end_act 
 	update_pos_moved:
-	addi v0, zero, 1
+	addi v0, zero, 0
+	br end_act
 	update_pos_skipped:
-	add v0, zero, zero
+	addi v0, zero, 1
 	end_act:
 	ldw ra, 0(sp)
 	addi sp, sp, 4
