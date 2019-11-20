@@ -70,6 +70,8 @@ init_stack_pointer:
 	addi sp, zero, 0x2000
 
 test2:
+	call generate_tetromino
+	call draw_gsa
 	add v0, zero, zero
 	add a0, zero, zero
 	addi a1, zero, 5
@@ -675,7 +677,7 @@ remove_full_line: # A MODULARISER !! A TESTER !!
 	# REMOVE DEFINITELY THE LINE, MOVE ALL UPPER PIXELS ONE LINE DOWN
 
 	loop_remove_full_line_y:
-		beq t0, zero, last_step_remove_full_line
+		beq t1, zero, last_step_remove_full_line
 		addi t1, t0, -1 # t1 = line above full line (y-1)
 		addi t2, zero, X_LIMIT # # t2 = x starting from 12 to 0
 		loop_remove_full_line_x:
