@@ -66,6 +66,9 @@
 
 # CODE IS HERE 
 
+init_stack_pointer:
+	addi sp, zero, 0x2000
+
 test2:
 	add v0, zero, zero
 	add a0, zero, zero
@@ -220,7 +223,7 @@ set_gsa:
 ; BEGIN:draw_gsa
 draw_gsa:
 	addi sp, sp, -4	 # push stack pointer
-	stw ra, STACK(sp) # save ra to stack
+	stw ra, 0(sp) # save ra to stack
 	call clear_leds
 	addi t0, zero, 0 # x coordinate value
 	addi t1, zero, 0 # y coordinate value
@@ -252,7 +255,7 @@ draw_gsa:
 				call pop_stack
 	addi t2, zero, 1 # value when (x,y) are not in gsa
 	bne t2, v0, loop_draw_gsa # branch if new coordinates are in gsa
-	ldw ra, STACK(sp) # load ra from stack
+	ldw ra, 0(sp) # load ra from stack
 	addi sp, sp, 4	  # pop stack pointer
 	ret
 ; END:draw_gsa
@@ -260,7 +263,7 @@ draw_gsa:
 ; BEGIN:draw_tetromino
 draw_tetromino:
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 	# save in registers details about the falling tetromino
 	add t0, a0, zero
 	ldw t1, T_X(zero)
@@ -293,7 +296,7 @@ draw_tetromino:
 		addi t7, t7, 4 # increment counter
 		addi t6, zero, 12
 		bne t6, t7, draw_3_squares_loop # exit condition if all 1+3 squares are set
-	ldw ra, STACK(sp)
+	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
 ; END:draw_tetromino
@@ -301,7 +304,7 @@ draw_tetromino:
 ; BEGIN:generate_tetromino
 generate_tetromino:
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 	get_random: 
 		#ldw t0, RANDOM_NUM(zero)
 		addi t0, zero, B # CHEAT THE TETROMINO
@@ -320,7 +323,7 @@ generate_tetromino:
 	stw t0, T_orientation(zero)
 	addi a0, zero, FALLING
 	call draw_tetromino # draw given tetromino
-	ldw ra, STACK(sp)
+	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
 ; END:generate_tetromino
@@ -328,7 +331,7 @@ generate_tetromino:
 ; BEGIN:detect_collision
 detect_collision:
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 
 	add t0, a0, zero
 	ldw t1, T_X(zero)
@@ -392,7 +395,7 @@ detect_collision:
 		addi v0, zero, NONE
 		br end 
 	end:	
-		ldw ra, STACK(sp)
+		ldw ra, 0(sp)
 		addi sp, sp, 4
 		ret
 ; END:detect_collision
@@ -421,7 +424,7 @@ rotate_tetromino:
 ; BEGIN:act
 act:
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 	call push_stack
 	addi a0, zero, NOTHING
 	call draw_tetromino
@@ -539,7 +542,7 @@ act:
 		call draw_tetromino
 		call draw_gsa # a faire ici ??
 		call pop_stack
-	ldw ra, STACK(sp)
+	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
 ; END:act
@@ -572,7 +575,7 @@ get_input:
 ; BEGIN:detect_full_line
 detect_full_line: # TO BE TESTED 
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 	addi t0, zero, Y_LIMIT # t0 = y starting from 8 to 0
 	loop_detect_full_line_y:
 		addi t0, t0, -1 
@@ -594,7 +597,7 @@ detect_full_line: # TO BE TESTED
 	addi v0, zero, Y_LIMIT
 	skip_detect_full_line:
 	add v0, zero, t0 # v0 = smallest y st for all x : gsa(x,y) = 1
-	ldw ra, STACK(sp)
+	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
 ; END:detect_full_line
@@ -602,7 +605,7 @@ detect_full_line: # TO BE TESTED
 ; BEGIN:remove_full_line
 remove_full_line: # A MODULARISER !! A TESTER !!
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 	add t0, zero, a0 # t0 = y (full line)
 	
 	addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
@@ -700,7 +703,7 @@ remove_full_line: # A MODULARISER !! A TESTER !!
 			call set_gsa
 			call pop_stack
 			bne t2, zero, loop_remove_full_line_x_ls
-	ldw ra, STACK(sp)
+	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
 ; END:remove_full_line
@@ -777,53 +780,51 @@ display_score:
 ; BEGIN:reset_game
 reset_game:
 	addi sp, sp, -4
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 	stw zero, SCORE(zero) 
 	call clear_leds
 	call generate_tetromino
-	ldw ra, STACK(sp)
+	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
 ; END:reset_game
 
 ; BEGIN:helper
-  .equ STACK, 0x2000 	; start of stack memory
-
 push_stack:
 	addi sp, sp, -48
-	stw a0, STACK+44(sp)
-	stw a1, STACK+40(sp)
-	stw a2, STACK+36(sp)
-	stw a3, STACK+32(sp)
-	stw t0, STACK+28(sp)
-	stw t1, STACK+24(sp)
-	stw t2, STACK+20(sp)
-	stw t3, STACK+16(sp)
-	stw t4, STACK+12(sp)
-	stw t5, STACK+8(sp)
-	stw t6, STACK+4(sp)
-	stw t7, STACK(sp)
+	stw a0, 44(sp)
+	stw a1, 40(sp)
+	stw a2, 36(sp)
+	stw a3, 32(sp)
+	stw t0, 28(sp)
+	stw t1, 24(sp)
+	stw t2, 20(sp)
+	stw t3, 16(sp)
+	stw t4, 12(sp)
+	stw t5, 8(sp)
+	stw t6, 4(sp)
+	stw t7, 0(sp)
 	ret
 
 pop_stack:
-	ldw t7, STACK(sp)
-	ldw t6, STACK+4(sp)
-	ldw t5, STACK+8(sp)
-	ldw t4, STACK+12(sp)
-	ldw t3, STACK+16(sp)
-	ldw t2, STACK+20(sp)
-	ldw t1, STACK+24(sp)
-	ldw t0, STACK+28(sp)
-	ldw a3, STACK+32(sp)
-	ldw a2, STACK+36(sp)
-	ldw a1, STACK+40(sp)
-	ldw a0, STACK+44(sp)
+	ldw t7, 0(sp)
+	ldw t6, 4(sp)
+	ldw t5, 8(sp)
+	ldw t4, 12(sp)
+	ldw t3, 16(sp)
+	ldw t2, 20(sp)
+	ldw t1, 24(sp)
+	ldw t0, 28(sp)
+	ldw a3, 32(sp)
+	ldw a2, 36(sp)
+	ldw a1, 40(sp)
+	ldw a0, 44(sp)
 	addi sp, sp, 48
 	ret
 
 collision_at_position:
 	addi sp, sp, -4 
-	stw ra, STACK(sp)
+	stw ra, 0(sp)
 	
 	add t5, a0, zero
 	add t1, a1, zero
@@ -863,7 +864,7 @@ collision_at_position:
 		br collision_at_position_end
 	
 	collision_at_position_end:
-		ldw ra, STACK(sp)
+		ldw ra, 0(sp)
 		addi sp, sp, 4
 		ret
 
