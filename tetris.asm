@@ -57,7 +57,7 @@
   .equ START_Y, 1
 
   ;; game rate of tetrominoe falling down (in terms of game loop iteration)
-  .equ RATE, 1
+  .equ RATE, 5
 
   ;; standard limits
   .equ X_LIMIT, 12
@@ -149,7 +149,7 @@ set_pixel:
 wait:
 	addi t0, zero, 0 # index to increment
 	addi t1, zero, 1 
-	slli t1, t1, 1	 # ceil value (20)
+	slli t1, t1, 20	 # ceil value (20)
 	loop_wait:
 		addi t0, t0, 1
 	bne t0, t1, loop_wait
@@ -272,8 +272,8 @@ generate_tetromino:
 	addi sp, sp, -4
 	stw ra, 0(sp)
 	get_random: 
-		#ldw t0, RANDOM_NUM(zero)
-		addi t0, zero, B # CHEAT THE TETROMINO
+		ldw t0, RANDOM_NUM(zero)
+		#addi t0, zero, B # CHEAT THE TETROMINO
 		andi t0, t0, 0x7 # get last 3 bits with a mask 
 		cmpge t1, t0, zero # x >= 0
 		cmplti t2, t0, 0x5 # x <= 4
@@ -853,117 +853,6 @@ collision_at_position:
 		ldw ra, 0(sp)
 		addi sp, sp, 4
 		ret
-
-test_for_rotation_to_be_deleted:
-	call generate_tetromino
-	call draw_gsa
-	addi a0, zero, rotL
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	addi a0, zero, moveR
-	call act
-	call act
-	call act
-	call act
-	call act
-	addi a0, zero, rotL
-	call act
-	addi a0, zero, moveL
-	call act
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act
-	break
-
-test2:
-	call generate_tetromino
-	call draw_gsa
-	add v0, zero, zero
-	add a0, zero, zero
-	addi a1, zero, 5
-	addi a2, zero, PLACED
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	call draw_gsa
-	call detect_full_line
-	add a0, zero, v0
-	call remove_full_line
-	call draw_gsa
-	break 
-
-test:
-	call generate_tetromino
-	call draw_gsa
-	addi a0, zero, moveR
-	call act
-	call act
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act	
-	call act
-	call act
-	call generate_tetromino
-	addi a0, zero, moveL
-	call act
-	call act
-	call act
-	call act
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call generate_tetromino
-	addi a0, zero, moveL
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call detect_full_line
-	add a0, zero, v0
-	call remove_full_line
-	break
 ; END:helper
 
 font_data:
