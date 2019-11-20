@@ -69,94 +69,62 @@
 init_stack_pointer:
 	addi sp, zero, 0x2000
 
-test2:
-	call generate_tetromino
-	call draw_gsa
-	add v0, zero, zero
-	add a0, zero, zero
-	addi a1, zero, 5
-	addi a2, zero, PLACED
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	addi a0, a0, 1
-	call set_gsa
-	call draw_gsa
-	call detect_full_line
-	add a0, zero, v0
-	call remove_full_line
-	call draw_gsa
-	break 
-
-test:
-	call generate_tetromino
-	call draw_gsa
-	addi a0, zero, moveR
-	call act
-	call act
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act	
-	call act
-	call act
-	call generate_tetromino
-	addi a0, zero, moveL
-	call act
-	call act
-	call act
-	call act
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call generate_tetromino
-	addi a0, zero, moveL
-	call act
-	addi a0, zero, moveD
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call act
-	call detect_full_line
-	add a0, zero, v0
-	call remove_full_line
-	break
-
 ; BEGIN:main
 main:
+	addi s0, zero, RATE
+	call reset_game
+	playing_game:
+	falling_tetromino:
+		add s1, zero, zero
+		
+		inner_loop:
+		beq s0, s1, skip2
+		call draw_gsa
+		call display_score
+		addi a0, zero, NOTHING
+		call draw_tetromino
+		call wait
+		call get_input
+		add a0, zero, v0
+		beq a0, zero, skip
+		call act
+		call draw_tetromino
+		skip:
+		addi s1, s1, 1
+		br inner_loop
+		
+		skip2:
+		addi a0, zero, NOTHING
+		call draw_tetromino
+		addi a0, zero, moveD
+		call act
+		add s2, zero, v0
+		call draw_tetromino
+		
+	bne s2, zero, falling_tetromino
 	
+	addi a0, zero, PLACED	
+	call draw_tetromino
+	
+	remove_full_lines:
+		call detect_full_line
+		addi t0, zero, 8
+		beq v0, t0, generate_new
+		call remove_full_line
+		br remove_full_lines
+	
+	generate_new:
+		call generate_tetromino
+		addi a0, zero, OVERLAP	
+		call detect_collision
+		addi t0, zero, OVERLAP
+		beq v0, t0, end_game
+		call draw_tetromino
+		br playing_game
+	end_game:
 	ret
 ; END:main
+break
 
 ; BEGIN:clear_leds
 clear_leds:
@@ -427,10 +395,6 @@ rotate_tetromino:
 act:
 	addi sp, sp, -4
 	stw ra, 0(sp)
-	call push_stack
-	addi a0, zero, NOTHING
-	call draw_tetromino
-	call pop_stack
 	add t0, zero, a0
 	addi t1, zero, moveL
 	beq t0, t1, move_left
@@ -450,33 +414,33 @@ act:
 		call detect_collision
 		call pop_stack
 		addi t0, zero, So_COL
-		beq v0, t0, update_pos
+		beq v0, t0, update_pos_skipped
 		ldw t0, T_Y(zero)
 		addi t0, t0, 1
 		stw t0, T_Y(zero)
-		br update_pos
+		br update_pos_moved
 	move_right:
 		call push_stack
 		addi a0, zero, E_COL
 		call detect_collision
 		call pop_stack
 		addi t0, zero, E_COL
-		beq v0, t0, update_pos
+		beq v0, t0, update_pos_skipped
 		ldw t0, T_X(zero)
 		addi t0, t0, 1
 		stw t0, T_X(zero)
-		br update_pos
+		br update_pos_moved
 	move_left:
 		call push_stack
 		addi a0, zero, W_COL
 		call detect_collision
 		call pop_stack
 		addi t0, zero, W_COL
-		beq v0, t0, update_pos
+		beq v0, t0, update_pos_skipped
 		ldw t0, T_X(zero)
 		addi t0, t0, -1
 		stw t0, T_X(zero)
-		br update_pos
+		br update_pos_moved
 	rotate:
 		# save initial position
 		ldw t0, T_X(zero)
@@ -492,7 +456,7 @@ act:
 		call detect_collision
 		call pop_stack
 		addi t3, zero, OVERLAP 
-		bne v0, t3, update_pos
+		bne v0, t3, update_pos_moved
 		# there is an overlap, move towards center [TODO: move correct direction in extreme cases]
 		first_shift:
 			cmpgei t3, t0, 6
@@ -511,7 +475,7 @@ act:
 		call detect_collision
 		call pop_stack
 		addi t3, zero, OVERLAP 
-		bne v0, t3, update_pos
+		bne v0, t3, update_pos_moved
 		# there is an overlap, move towards center [TODO: move correct direction in extreme cases]
 		second_shift:
 			cmpgei t3, t0, 6
@@ -530,20 +494,21 @@ act:
 		call detect_collision
 		call pop_stack
 		addi t3, zero, OVERLAP 
-		bne v0, t3, update_pos
+		bne v0, t3, update_pos_moved
 		stw t0, T_X(zero)
 		stw t1, T_Y(zero)
 		stw t2, T_orientation(zero)
-		br update_pos
+		br update_pos_skipped
 	act_reset:
 		call push_stack
-		#call reset_game
-		call pop_stack 
-	update_pos: 
-		call push_stack
-		call draw_tetromino
-		call draw_gsa # a faire ici ??
+		call reset_game
 		call pop_stack
+		br end_act 
+	update_pos_moved:
+	addi v0, zero, 1
+	update_pos_skipped:
+	add v0, zero, zero
+	end_act:
 	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
@@ -571,11 +536,12 @@ get_input:
 	andi t1, t0, 1
 	addi v0, zero, moveR
 	end_get_input:
+	stw zero, BUTTONS+4(zero)
 	ret 
 ; END:get_input
 
 ; BEGIN:detect_full_line
-detect_full_line: # TO BE TESTED 
+detect_full_line:
 	addi sp, sp, -4
 	stw ra, 0(sp)
 	addi t0, zero, Y_LIMIT # t0 = y starting from 8 to 0
@@ -605,7 +571,7 @@ detect_full_line: # TO BE TESTED
 ; END:detect_full_line
 
 ; BEGIN:remove_full_line
-remove_full_line: # A MODULARISER !! A TESTER !!
+remove_full_line: # A MODULARISER !! 
 	addi sp, sp, -4
 	stw ra, 0(sp)
 	add t0, zero, a0 # t0 = y (full line)
@@ -896,6 +862,89 @@ test_for_rotation_to_be_deleted:
 	call act
 	call act
 	call act
+	break
+
+test2:
+	call generate_tetromino
+	call draw_gsa
+	add v0, zero, zero
+	add a0, zero, zero
+	addi a1, zero, 5
+	addi a2, zero, PLACED
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	addi a0, a0, 1
+	call set_gsa
+	call draw_gsa
+	call detect_full_line
+	add a0, zero, v0
+	call remove_full_line
+	call draw_gsa
+	break 
+
+test:
+	call generate_tetromino
+	call draw_gsa
+	addi a0, zero, moveR
+	call act
+	call act
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act	
+	call act
+	call act
+	call generate_tetromino
+	addi a0, zero, moveL
+	call act
+	call act
+	call act
+	call act
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call generate_tetromino
+	addi a0, zero, moveL
+	call act
+	addi a0, zero, moveD
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call act
+	call detect_full_line
+	add a0, zero, v0
+	call remove_full_line
 	break
 ; END:helper
 
