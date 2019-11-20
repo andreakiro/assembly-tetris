@@ -69,13 +69,13 @@
 init_stack_pointer:
 	addi sp, zero, 0x2000
 
-main2:
+main:
 	call reset_game
-m_generate_tetromino_loop:
-m_falling_loop:
+playing_game:
+falling_tetromino:
 	addi s0, zero, RATE
-m_input_loop:
-	beq s0, zero, m_input_loop_end
+input_loop:
+	beq s0, zero, input_loop_end
 	call draw_gsa
 	call display_score
 	addi a0, zero, NOTHING
@@ -83,34 +83,34 @@ m_input_loop:
 	call wait
 	call get_input
 	addi a0, v0, 0
-	beq a0, zero, skip_no_input
+	beq a0, zero, skip
 	call act
-skip_no_input:
+skip:
 	addi a0, zero, FALLING
 	call draw_tetromino
 	addi s0, s0, -1
-	jmpi m_input_loop
-m_input_loop_end:
+	br input_loop
+input_loop_end:
 	addi a0, zero, NOTHING
 	call draw_tetromino
 	addi a0, zero, moveD
 	call act
-	bne v0, zero, m_falling_loop_end
+	bne v0, zero, falling_tetromino_end
 	addi a0, zero, FALLING
 	call draw_tetromino
-	jmpi m_falling_loop
-m_falling_loop_end:
+	br falling_tetromino
+falling_tetromino_end:
 	addi a0, zero, PLACED
 	call draw_tetromino
-m_remove_full_lines_loop:
+remove_full_lines:
 	call detect_full_line
 	addi t0, zero, 8
-	beq v0, t0, m_remove_full_lines_loop
+	beq v0, t0, generate_new
 	addi a0, v0, 0
 	call remove_full_line
 	call increment_score
-	jmpi m_remove_full_lines_loop
-m_remove_full_lines_end:
+	br remove_full_lines
+generate_new:
 	call generate_tetromino
 	addi a0, zero, OVERLAP
 	add s1, zero, a0
@@ -118,67 +118,9 @@ m_remove_full_lines_end:
 	beq s1, v0, m_generate_tetromino_loop_end
 	addi a0, zero, FALLING
 	call draw_tetromino
-	jmpi m_generate_tetromino_loop
+	br playing_game
 m_generate_tetromino_loop_end:
-	jmpi main
-
-break
-; BEGIN:main
-main:
-	addi s0, zero, RATE
-	call reset_game
-	playing_game:
-	falling_tetromino:
-		add s1, zero, zero
-		
-		inner_loop:
-		beq s0, s1, skip2
-		call draw_gsa
-		call display_score
-		addi a0, zero, NOTHING
-		call draw_tetromino
-		call wait
-		call get_input
-		add a0, zero, v0
-		beq a0, zero, skip
-		call act
-		call draw_tetromino
-		skip:
-		addi s1, s1, 1
-		br inner_loop
-		
-		skip2:
-		addi a0, zero, NOTHING
-		call draw_tetromino
-		addi a0, zero, moveD
-		call act
-		add s2, zero, v0
-		call draw_tetromino
-		
-	bne s2, zero, falling_tetromino
-	
-	addi a0, zero, PLACED	
-	call draw_tetromino
-	
-	remove_full_lines:
-		call detect_full_line
-		addi t0, zero, 8
-		beq v0, t0, generate_new
-		call remove_full_line
-		br remove_full_lines
-	
-	generate_new:
-		call generate_tetromino
-		addi a0, zero, OVERLAP	
-		call detect_collision
-		addi t0, zero, OVERLAP
-		beq v0, t0, end_game
-		call draw_tetromino
-		br playing_game
-	end_game:
-	ret
-; END:main
-break
+	br main
 
 ; BEGIN:clear_leds
 clear_leds:
@@ -345,8 +287,6 @@ generate_tetromino:
 	stw t0, T_Y(zero)
 	addi t0, zero, N
 	stw t0, T_orientation(zero)
-	addi a0, zero, FALLING
-	call draw_tetromino # draw given tetromino
 	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
@@ -810,8 +750,26 @@ reset_game:
 	addi sp, sp, -4
 	stw ra, 0(sp)
 	stw zero, SCORE(zero) 
-	call clear_leds
+	addi t0, zero, Y_LIMIT
+	loop_reset_y:
+		addi t0, t0, -1
+		beq t0, t3, skip_reset
+		addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
+		loop_reset_x:
+			addi t1, t1, -1
+			call push_stack
+			add a0, zero, t1 # a0 = x
+			add a1, zero, t0 # a1 = y
+			addi a2, zero, NOTHING
+			call set_gsa
+			call pop_stack
+			bne t1, zero, loop_reset_x
+			br loop_reset_y
+	skip_reset:
 	call generate_tetromino
+	addi a0, a0, FALLING
+	call draw_tetromino
+	call draw_gsa
 	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
