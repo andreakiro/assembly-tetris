@@ -645,7 +645,7 @@ remove_full_line: # A MODULARISER !!
 	# REMOVE DEFINITELY THE LINE, MOVE ALL UPPER PIXELS ONE LINE DOWN
 
 	loop_remove_full_line_y:
-		beq t1, zero, last_step_remove_full_line
+		beq t0, zero, last_step_remove_full_line
 		addi t1, t0, -1 # t1 = line above full line (y-1)
 		addi t2, zero, X_LIMIT # # t2 = x starting from 12 to 0
 		loop_remove_full_line_x:
@@ -653,7 +653,9 @@ remove_full_line: # A MODULARISER !!
 			call push_stack
 			add a0, zero, t2 # a0 = x
 			add a1, zero, t1 # a1 = y - 1
+			call push_stack
 			call get_gsa
+			call pop_stack
 			add a1, zero, t0 # a1 = y 
 			add a2, zero, v0 # a2 = p of y - 1
 			call set_gsa
