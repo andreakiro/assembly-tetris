@@ -273,7 +273,7 @@ generate_tetromino:
 	stw ra, 0(sp)
 	get_random: 
 		ldw t0, RANDOM_NUM(zero)
-		#addi t0, zero, B # CHEAT THE TETROMINO
+		#addi t0, zero, T # CHEAT THE TETROMINO
 		andi t0, t0, 0x7 # get last 3 bits with a mask 
 		cmpge t1, t0, zero # x >= 0
 		cmplti t2, t0, 0x5 # x <= 4
@@ -815,6 +815,26 @@ collision_at_position:
 	add t5, a0, zero
 	add t1, a1, zero
 	add t2, a2, zero
+
+######################## HOT NEW FIX ########################
+
+	add a0, t1, zero # new x coordinate
+	add a1, t2, zero # new y coordinate (a2 has already been saved)
+
+	call push_stack
+	call in_gsa
+	call pop_stack
+	addi t6, zero, 1
+	beq t6, v0, collision_at_position_detected
+
+	call push_stack
+	call get_gsa
+	call pop_stack
+	addi t6, zero, PLACED
+	beq v0, t6, collision_at_position_detected
+
+######################## HOT NEW FIX ########################
+
 	addi t7, zero, 0 # initialize counter
 	collision_at_position_loop:
 		ldw t6, DRAW_Ax(t5) # x offset
