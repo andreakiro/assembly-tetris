@@ -63,11 +63,52 @@
   .equ X_LIMIT, 12
   .equ Y_LIMIT, 8
 
+init_stack_pointer:	
+addi sp, zero, 0x2000
+
+############## TEST ############## 
+test_detect_fl:
+addi a0, zero, PLACED
+addi s0, zero, 1
+addi s1, zero, 0
+addi s2, zero, B 
+addi s3, zero, N
+stw s0, T_X(zero)
+stw s1, T_Y(zero)
+stw s2, T_type(zero)
+stw s3, T_orientation(zero)
+
+call draw_tetromino
+addi s0, s0, 4
+stw s0, T_X(zero)
+addi a0, zero, PLACED
+call draw_tetromino
+addi s0, s0, 4
+stw s0, T_X(zero)
+addi a0, zero, PLACED
+call draw_tetromino
+
+addi s0, zero, 1
+addi s1, zero, 7
+stw s0, T_X(zero)
+stw s1, T_Y(zero)
+addi a0, zero, PLACED
+
+call draw_tetromino
+addi s0, s0, 4
+stw s0, T_X(zero)
+addi a0, zero, PLACED
+call draw_tetromino
+addi s0, s0, 4
+stw s0, T_X(zero)
+addi a0, zero, PLACED
+call draw_tetromino
+
+call draw_gsa
+call detect_full_line
+break
 
 ############## MAIN ############## 
-
-init_stack_pointer:
-	addi sp, zero, 0x2000
 
 main:
 	call reset_game
@@ -544,10 +585,10 @@ detect_full_line:
 	addi sp, sp, -4
 	stw ra, 0(sp)
 
-	addi t0, zero, Y_LIMIT # t0 = y starting from 8 to 0
+	addi t0, zero, -1 # t0 = y starting from 0 to 8
 	loop_detect_full_line_y:
-		addi t0, t0, -1
-		addi t3, zero, -1
+		addi t0, t0, 1
+		addi t3, zero, Y_LIMIT
 		beq t0, t3, no_full_lines
 		addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
 		addi t2, zero, 1 # t2 = all x from line y are 1 (marker)
@@ -564,16 +605,17 @@ detect_full_line:
 
 	add v0, zero, t0 # v0 = smallest y st for all x : gsa(x,y) = 1/2
 	br end_detect_full_line
-	no_full_lines: 
+	no_full_lines:
 	addi v0, zero, Y_LIMIT 
 	end_detect_full_line:
 	ldw ra, 0(sp)
 	addi sp, sp, 4
+
 	ret
 ; END:detect_full_line
 
 ; BEGIN:remove_full_line
-remove_full_line: # A MODULARISER !! 
+remove_full_line:
 	addi sp, sp, -4
 	stw ra, 0(sp)
 	add t0, zero, a0 # t0 = y (full line)
@@ -665,7 +707,7 @@ remove_full_line: # A MODULARISER !!
 		br loop_remove_full_line_y
 
 	last_step_remove_full_line: 
-		addi t2, zero, X_LIMIT # # t2 = x starting from 12 to 0
+		addi t2, zero, X_LIMIT # t2 = x starting from 12 to 0
 		loop_remove_full_line_x_ls:
 			addi t2, t2, -1
 			call push_stack
@@ -675,6 +717,7 @@ remove_full_line: # A MODULARISER !!
 			call set_gsa
 			call pop_stack
 			bne t2, zero, loop_remove_full_line_x_ls
+	
 	ldw ra, 0(sp)
 	addi sp, sp, 4
 	ret
