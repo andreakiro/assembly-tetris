@@ -769,9 +769,10 @@ reset_game:
 	stw ra, 0(sp)
 	stw zero, SCORE(zero) 
 	addi t0, zero, Y_LIMIT
+	addi t2, zero, -1
 	loop_reset_y:
 		addi t0, t0, -1
-		beq t0, t3, skip_reset
+		beq t0, t2, skip_reset
 		addi t1, zero, X_LIMIT # t1 = x starting from 12 to 0
 		loop_reset_x:
 			addi t1, t1, -1
@@ -785,7 +786,7 @@ reset_game:
 			br loop_reset_y
 	skip_reset:
 	call generate_tetromino
-	addi a0, a0, FALLING
+	addi a0, zero, FALLING
 	call draw_tetromino
 	call draw_gsa
 	ldw ra, 0(sp)
