@@ -64,7 +64,7 @@
   .equ Y_LIMIT, 8
 
 
-# CODE IS HERE 
+############## MAIN ############## 
 
 init_stack_pointer:
 	addi sp, zero, 0x2000
@@ -72,6 +72,8 @@ init_stack_pointer:
 main:
 	call reset_game
 playing_game:
+addi t0, zero, 0x4CF #1231
+stw t0, SCORE(zero)
 falling_tetromino:
 	addi s0, zero, RATE
 input_loop:
@@ -121,6 +123,8 @@ generate_new:
 	br playing_game
 m_generate_tetromino_loop_end:
 	br main
+
+############## FUNCTIONS ##############
 
 ; BEGIN:clear_leds
 clear_leds:
@@ -679,7 +683,7 @@ remove_full_line: # A MODULARISER !!
 ; BEGIN:increment_score
 increment_score:
 	ldw t0, SCORE(zero)
-	cmplti t1, t0, 0x3E8 # t1 = score < 1000
+	cmplti t1, t0, 0x2710 # t1 = score < 10_000
 	beq t1, zero, end_increment_score
 	addi t0, t0, 1
 	stw t0, SCORE (zero)
@@ -693,55 +697,69 @@ display_score:
 	add t1, zero, t0 # unit
 	add t2, zero, t0 # decimal
 	add t3, zero, t0 # decimal squared
+	add t4, zero, t0 # decimal cubed
 	
 	loop_to_get_unit:
-	cmplti t4, t1, 10
-	bne t4, zero, get_decimal
+	cmplti t5, t1, 10
+	bne t5, zero, get_decimal
 	addi t1, t1, -10
 	br loop_to_get_unit
 	
 	get_decimal:
 	sub t2, t2, t1
-	add t5, zero, zero
+	add t6, zero, zero
 	loop_to_get_decimal:
-	cmplti t4, t2, 100
-	bne t4, zero, get_unit_decimal
+	cmplti t5, t2, 100
+	bne t5, zero, get_unit_decimal
 	addi t2, t2, -100
 	br loop_to_get_decimal
 	get_unit_decimal:
 	beq t2, zero, end_decimal
 	addi t2, t2, -10
-	addi t5, t5, 1
+	addi t6, t6, 1
 	br get_unit_decimal
 	end_decimal:
-	add t2, zero, t5
+	add t2, zero, t6
 	
 	get_decimal_squared:
-	slli t4, t2, 3
-	add t4, t4, t2
-	add t4, t4, t2
-	sub t3, t3, t4
+	slli t5, t2, 3
+	add t5, t5, t2
+	add t5, t5, t2
+	sub t3, t3, t5
 	sub t3, t3, t1
-	add t4, zero, zero
+	add t5, zero, zero
 	get_unit_decimal_squared:
 	beq t3, zero, end_decimal_squared
 	addi t3, t3, -100
-	addi t4, t4, 1
+	addi t5, t5, 1
 	br get_unit_decimal_squared
 	end_decimal_squared:
-	add t3, zero, t4
+	add t3, zero, t5
+
+	get_decimal_cubed:
+	add t6, zero, zero
+	loop_cubed:
+	cmplti t5, t4, 0x3E8
+	bne t5, zero, end_cubed
+	addi t4, t4, -0x3E8 
+	addi t6, t6, 1
+	end_cubed:
+	add t4, zero, t6
 	
 	slli t1, t1, 2
 	slli t2, t2, 2
 	slli t3, t3, 2
+	slli t4, t4, 2
 	
 	ldw t1, font_data(t1)
 	ldw t2, font_data(t2)
 	ldw t3, font_data(t3)
+	ldw t4, font_data(t4)
 	
 	stw t1, SEVEN_SEGS+12(zero)
 	stw t2, SEVEN_SEGS+8(zero)
 	stw t3, SEVEN_SEGS+4(zero)
+	stw t4, SEVEN_SEGS(zero)
 	ret
 ; END:display_score
 
@@ -774,6 +792,8 @@ reset_game:
 	addi sp, sp, 4
 	ret
 ; END:reset_game
+
+############## HELPERS ##############
 
 ; BEGIN:helper
 push_stack:
