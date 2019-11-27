@@ -683,7 +683,7 @@ remove_full_line: # A MODULARISER !!
 ; BEGIN:increment_score
 increment_score:
 	ldw t0, SCORE(zero)
-	cmplti t1, t0, 0x2710 # t1 = score < 10_000
+	cmplti t1, t0, 0x270F # t1 = score <? 9999
 	beq t1, zero, end_increment_score
 	addi t0, t0, 1
 	stw t0, SCORE (zero)
@@ -706,6 +706,7 @@ display_score:
 	bne t6, zero, end_cubed
 	addi t4, t4, -0x3E8 
 	addi t5, t5, 1
+	br loop_cubed
 	end_cubed:
 	add t4, zero, t5
 
@@ -718,13 +719,14 @@ display_score:
 	add t7, zero, t5 # we save decimal cubed * 1000
 
 	decimal_squared: # t3
-	sub t3, t3, t5   # we remove decimal cubed from t3
+	sub t3, t3, t7   # we remove decimal cubed from t3
 	add t5, zero, zero # index	
 	loop_squared:
 	cmplti t6, t3, 0x64 # current <? 100
 	bne t6, zero, end_squared
 	addi t3, t3, -0x64
 	addi t5, t5, 1
+	br loop_squared
 	end_squared:
 	add t3, zero, t5
 	
@@ -745,6 +747,7 @@ display_score:
 	bne t6, zero, end_decimal
 	addi t2, t2, -0xA
 	addi t5, t5, 1
+	br loop_decimal
 	end_decimal:
 	add t2, zero, t5
 
