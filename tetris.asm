@@ -72,8 +72,6 @@ init_stack_pointer:
 main:
 	call reset_game
 playing_game:
-addi t0, zero, 0x7CF #1999
-stw t0, SCORE(zero)
 falling_tetromino:
 	addi s0, zero, RATE
 input_loop:
