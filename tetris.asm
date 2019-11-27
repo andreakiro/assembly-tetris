@@ -72,7 +72,7 @@ init_stack_pointer:
 main:
 	call reset_game
 playing_game:
-addi t0, zero, 0x4CF #1231
+addi t0, zero, 0x7CF #1999
 stw t0, SCORE(zero)
 falling_tetromino:
 	addi s0, zero, RATE
@@ -698,53 +698,63 @@ display_score:
 	add t2, zero, t0 # decimal
 	add t3, zero, t0 # decimal squared
 	add t4, zero, t0 # decimal cubed
-	
-	loop_to_get_unit:
-	cmplti t5, t1, 10
-	bne t5, zero, get_decimal
-	addi t1, t1, -10
-	br loop_to_get_unit
-	
-	get_decimal:
-	sub t2, t2, t1
-	add t6, zero, zero
-	loop_to_get_decimal:
-	cmplti t5, t2, 100
-	bne t5, zero, get_unit_decimal
-	addi t2, t2, -100
-	br loop_to_get_decimal
-	get_unit_decimal:
-	beq t2, zero, end_decimal
-	addi t2, t2, -10
-	addi t6, t6, 1
-	br get_unit_decimal
-	end_decimal:
-	add t2, zero, t6
-	
-	get_decimal_squared:
-	slli t5, t2, 3
-	add t5, t5, t2
-	add t5, t5, t2
-	sub t3, t3, t5
-	sub t3, t3, t1
-	add t5, zero, zero
-	get_unit_decimal_squared:
-	beq t3, zero, end_decimal_squared
-	addi t3, t3, -100
-	addi t5, t5, 1
-	br get_unit_decimal_squared
-	end_decimal_squared:
-	add t3, zero, t5
 
-	get_decimal_cubed:
-	add t6, zero, zero
+	decimal_cubed: # t4
+	add t5, zero, zero # index
 	loop_cubed:
-	cmplti t5, t4, 0x3E8
-	bne t5, zero, end_cubed
+	cmplti t6, t4, 0x3E8 # current <? 1000
+	bne t6, zero, end_cubed
 	addi t4, t4, -0x3E8 
-	addi t6, t6, 1
+	addi t5, t5, 1
 	end_cubed:
-	add t4, zero, t6
+	add t4, zero, t5
+
+	mult_decimal_cubed_by_1000:
+	slli t5, t4, 10 # mul t4 by 1024
+	slli t6, t4, 4  # mul t4 by 16
+	slli t7, t4, 3  # mul t4 by 8
+	sub t5, t5, t6
+	sub t5, t5, t7  # t5 = t4 * 1000
+	add t7, zero, t5 # we save decimal cubed * 1000
+
+	decimal_squared: # t3
+	sub t3, t3, t5   # we remove decimal cubed from t3
+	add t5, zero, zero # index	
+	loop_squared:
+	cmplti t6, t3, 0x64 # current <? 100
+	bne t6, zero, end_squared
+	addi t3, t3, -0x64
+	addi t5, t5, 1
+	end_squared:
+	add t3, zero, t5
+	
+	mult_decimal_squared_by_100:
+	slli t5, t3, 7 # mul t3 by 128
+	slli t6, t3, 5 # mul t3 by 32
+	sub t5, t5, t6 # t5 = t3 * 96
+	slli t6, t3, 2 # mul t3 by 4
+	add t5, t5, t6 # t5 = t3 * 100
+	add t6, zero, t5 # we save decimal squared
+
+	decimal: # t2
+	sub t2, t2, t6 # we remove decimal squared * 100
+	sub t2, t2, t7 # we remove decimal cubed * 1000
+	add t5, zero, zero # index
+	loop_decimal:	
+	cmplti t6, t2, 0xA # current <? 10
+	bne t6, zero, end_decimal
+	addi t2, t2, -0xA
+	addi t5, t5, 1
+	end_decimal:
+	add t2, zero, t5
+
+	unit: # t1
+	loop_unit:
+	cmplti t5, t1, 10
+	bne t5, zero, end_unit
+	addi t1, t1, -10
+	br loop_unit
+	end_unit:
 	
 	slli t1, t1, 2
 	slli t2, t2, 2
