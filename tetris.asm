@@ -842,6 +842,7 @@ reset_game:
 			br loop_reset_y
 	skip_reset:
 	call generate_tetromino
+	call display_score
 	addi a0, zero, FALLING
 	call draw_tetromino
 	call draw_gsa
