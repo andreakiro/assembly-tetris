@@ -66,47 +66,6 @@
 init_stack_pointer:	
 addi sp, zero, 0x2000
 
-############## TEST ############## 
-test_detect_fl:
-addi a0, zero, PLACED
-addi s0, zero, 1
-addi s1, zero, 0
-addi s2, zero, B 
-addi s3, zero, N
-stw s0, T_X(zero)
-stw s1, T_Y(zero)
-stw s2, T_type(zero)
-stw s3, T_orientation(zero)
-
-call draw_tetromino
-addi s0, s0, 4
-stw s0, T_X(zero)
-addi a0, zero, PLACED
-call draw_tetromino
-addi s0, s0, 4
-stw s0, T_X(zero)
-addi a0, zero, PLACED
-call draw_tetromino
-
-addi s0, zero, 1
-addi s1, zero, 7
-stw s0, T_X(zero)
-stw s1, T_Y(zero)
-addi a0, zero, PLACED
-
-call draw_tetromino
-addi s0, s0, 4
-stw s0, T_X(zero)
-addi a0, zero, PLACED
-call draw_tetromino
-addi s0, s0, 4
-stw s0, T_X(zero)
-addi a0, zero, PLACED
-call draw_tetromino
-
-call draw_gsa
-call detect_full_line
-break
 
 ############## MAIN ############## 
 
@@ -518,11 +477,11 @@ act:
 			cmpgei t3, t0, 6
 			beq t3, zero, toward_center_right2
 			toward_center_left2:
-				addi t3, t0, -1
+				addi t3, t0, -2
 				stw t3, T_X(zero)
 				br last_part
 			toward_center_right2:
-				addi t3, t0, 1
+				addi t3, t0, 2
 				stw t3, T_X(zero) 
 		last_part:
 		# check if there is any overlap
