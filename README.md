@@ -21,3 +21,7 @@ Just open the tetris.asm file when you're in the NiosII app and edit the code!
 ### Simulation
 
 You can easily assemble the code, and run a simulation to see evolution of registers, RAM/ROM and LEDs.
+
+# Contributors
+
+Marc Lundwall, Andrea Pinto.
